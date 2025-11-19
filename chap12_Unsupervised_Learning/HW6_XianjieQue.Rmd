@@ -1,0 +1,391 @@
+---
+title: "HW6_XianjieQue"
+author: "XianjieQue"
+date: "2025-03-16"
+output: html_document
+---
+
+## 12.1
+
+### 12.1 (a) Prove (12.18)
+
+12.18 is:
+
+$$
+\frac{1}{|C_k|}\sum_{i,i' \in C_k} \sum_{j=1}^p (x_{ij} - x_{i'j})^2 =
+2 \sum_{i \in C_k} \sum_{j=1}^p  (x_{ij} - \bar{x}_{kj})^2
+$$
+
+where $$\bar{x}_{kj} = \frac{1}{|C_k|}\sum_{i \in C_k} x_{ij}$$
+
+For any two observations in cluster, we rewrite their difference:
+
+$$
+\begin{align}
+(x_{ij} - x_{i'j})^2
+  = & ((x_{ij} - \bar{x}_{kj}) - (x_{i'j} - \bar{x}_{kj}))^2 \\
+  = & (x_{ij} - \bar{x}_{kj})^2 -
+      2(x_{ij} - \bar{x}_{kj})(x_{i'j} - \bar{x}_{kj}) +
+      (x_{i'j} - \bar{x}_{kj})^2
+\end{align}
+$$
+
+Note that the first term is independent of $i'$ and the last is independent of $i$.
+
+Therefore, it can be written as:
+
+$$
+= \frac{1}{|C_k|} \sum_{i,i' \in C_k} \sum_{j=1}^p (x_{ij} - \bar{x}_{kj})^2 -
+\frac{2}{|C_k|} \sum_{i,i' \in C_k} \sum_{j=1}^p (x_{ij} - \bar{x}_{kj})(x_{i'j} - \bar{x}_{kj}) +
+\frac{1}{|C_k|} \sum_{i,i' \in C_k} \sum_{j=1}^p (x_{i'j} - \bar{x}_{kj})^2
+$$
+
+Since the middle term sums to zero:
+
+$$
+\sum_{i \in C_k} (x_{ij} - \bar{x}_{kj}) = 0,
+$$
+
+we obtain:
+
+$$
+2 \sum_{i \in C_k} \sum_{j=1}^p (x_{ij} - \bar{x}_{kj})^2
+$$
+
+It proves equation (12.18).
+
+### 12.1 (b) argue that the K-means clustering algorithm (Algorithm 12.2) decreases the objective (12.17) at each iteration.
+
+Equation (12.18) shows that the sum of squared Euclidean distances between all possible pairs of points in a cluster can be rewritten in terms of the variance within the cluster. The K-means algorithm minimizes the sum of squared Euclidean distances between points and their cluster centroids, effectively reducing the within-cluster variance at each step.
+
+Since the K-means algorithm updates cluster centroids by minimizing the squared distance to all points assigned to them, the objective function decreases with each iteration until convergence.
+
+## 12.2 hierarchical clustering
+
+### 12.2 (a) Complete Linkage Clustering
+
+```{r 12.2 (a)}
+library(cluster)
+
+dist_matrix <- matrix(c(
+  0,   0.3, 0.4, 0.7,
+  0.3, 0,   0.5, 0.8,
+  0.4, 0.5, 0,   0.45,
+  0.7, 0.8, 0.45, 0
+), nrow = 4, byrow = TRUE)
+
+# Convert to distance object
+dist_obj <- as.dist(dist_matrix)
+
+# Complete Linkage Clustering
+hc_complete <- hclust(dist_obj, method = "complete")
+
+# Plot dendrogram
+plot(hc_complete, main = "Complete Linkage Dendrogram", sub = "", xlab = "Observations", ylab = "Height")
+```
+
+### 12.2 (b) Single Linkage Clustering
+
+```{r 12.2 (b)}
+hc_single <- hclust(dist_obj, method = "single")
+plot(hc_single, main = "Single Linkage Dendrogram", sub = "", xlab = "Observations", ylab = "Height")
+```
+
+### 12.2 (c) Cutting Complete into 2
+
+Cluster 1: (1,2)
+Cluster 2: (3,4)
+
+```{r 12.2 (c)}
+cut_complete <- cutree(hc_complete, 2)
+table(1:4, cut_complete)
+```
+
+### 12.2 (d) Cutting Single into 2
+
+Cluster 1: (1,2,3)
+Cluster 2: (4)
+
+```{r 12.2 (d)}
+cut_single <- cutree(hc_single, 2)
+table(1:4, cut_single)
+```
+
+### 12.2 (e) reposition
+
+```{r 12.2 (e)}
+plot(hc_complete, hang = -1, main = "Rearranged Complete Linkage Dendrogram")
+
+# we can also change the label
+plot(hc_complete, labels = c(2,4,3,1), main = "Rearranged Complete Linkage Dendrogram")
+```
+
+## 12.8 calculate PVE in two ways
+
+I used centered and scaled variables for both methods.
+
+### 12.8 (a) Using the sdev output
+
+```{r 12.8 (a)}
+data("USArrests")
+# dim(USArrests)
+
+pca_result <- prcomp(USArrests, center = TRUE, scale = TRUE)
+
+pve_sdev <- pca_result$sdev^2 / sum(pca_result$sdev^2)
+
+pve_sdev
+```
+
+### 12.8 (b) Using Equation 12.10
+
+From the result, we can see that these two approaches give the same results.
+
+```{r 12.8 (b)}
+pve_manual <- colSums(pca_result$x^2) / sum(colSums(scale(USArrests)^2))
+
+pve_manual
+```
+
+## 12.10 perform PCA and K-means on simulated data
+
+### 12.10 (a) generate dataset
+
+```{r 12.10 (a)}
+set.seed(6)
+data_A <- matrix(rnorm(20 * 50), ncol = 50)   
+data_B <- matrix(rnorm(20 * 50), ncol = 50) + 5  
+data_C <- matrix(rnorm(20 * 50), ncol = 50) - 8 
+
+data10 <- rbind(data_A, data_B, data_C)
+
+classes <- rep(c("A", "B", "C"), each = 20)
+dimnames(data10) <- list(classes, paste0("V", 1:50))
+```
+
+### 12.10 (b) Perform PCA and plot the first 2 PCs
+
+We can see there are 3 separated clusters.
+
+```{r 12.10 (b)}
+set.seed(6)
+pca10 <- prcomp(data10)
+
+library(ggplot2)
+ggplot(
+  data.frame(Class = classes, PC1 = pca10$x[, 1], PC2 = pca10$x[, 2]),
+  aes(x = PC1, y = PC2, col = Class)
+) +
+  geom_point()
+```
+
+### 12.10 (c) Perform K-means clustering with K = 3. 
+
+"K-means clustering with K = 3" doesn't perform well from the result. 
+
+There are 3 clusters. Cluster 2 is a mix of Class A and B. However, Class C was split into two clusters.
+
+```{r 12.10 (c)}
+set.seed(6)
+km_10_3 <- kmeans(data10, 3)
+km_10_3$cluster
+table(km_10_3$cluster, names(km_10_3$cluster))
+```
+
+### 12.10 (d) Perform K-means clustering with K = 2.
+
+K-means clustering with K = 2 effectively defines cluster 1 to be class C, but cluster 2 is a mix of classes A and B. 
+
+The reason may be the difference of the mean of classes A and B is smaller.
+
+```{r 12.10 (d)}
+set.seed(6)
+km_10_2 <- kmeans(data10, 2)
+km_10_2$cluster
+table(km_10_2$cluster, names(km_10_2$cluster))
+```
+
+### 12.10 (e) Perform K-means clustering with K = 4.
+
+K-means clustering with K = 4 effectively defines cluster 2 to be class A, cluster 4 to be class B, but clusters 1 and 3 are split over class C.
+
+```{r 12.10 (e)}
+set.seed(6)
+km_10_4 <- kmeans(data10, 4)
+km_10_4$cluster
+table(km_10_4$cluster, names(km_10_4$cluster))
+```
+
+### 12.10 (f) Perform K-means clustering with K = 3 on the first 2 PCs
+
+"K = 3 on the first 2 PCs" doesn't perform well from the result. 
+
+There are 3 clusters. Cluster 2 is a mix of Class A and B. However, Class C was split into two clusters.
+
+The result is quite similar to the result of "Perform K-means clustering with K = 3".
+
+```{r 12.10 (f)}
+set.seed(6)
+km_10_f <- kmeans(pca10$x[, 1:2], 3)
+km_10_f$cluster
+table(km_10_f$cluster, names(km_10_f$cluster))
+```
+
+### 12.10 (g) Perform K-means clustering with K = 3 + "scale() function"
+
+"K = 3 after scaling" doesn't perform well from the result. 
+
+There are 3 clusters. Cluster 2 is a mix of Class A and B. However, Class C was split into two clusters.
+
+The result is extremely similar to the result of "Perform K-means clustering with K = 3" without scaling.
+
+```{r 12.10 (g)}
+set.seed(6)
+km_10_g <- kmeans(scale(data10), 3)
+km_10_g$cluster
+table(km_10_g$cluster, names(km_10_g$cluster))
+```
+
+## 12.13 gene expression data set "Ch12Ex13.csv"
+
+### 12.13 (a) Load in the data
+
+```{r 12.13 (a)}
+data13 <- read.csv("Ch12Ex13.csv", header = FALSE)
+dim(data13)  
+```
+
+### 12.13 (b) hierarchical clustering using correlation-based distance
+
+Yes, the genes separate the samples into the two groups. My results depend on the type of linkage used.
+
+For example, in the case of average linkage and single linkage, the disease samples all fall within a subset of the healthy samples. But the dissimilarity is more distinct in complete linkage.
+
+But generally, all three types of linkage clearly distinguish healthy samples from diseased samples.
+
+```{r 12.13 (b)}
+colnames(data13) <- c(paste0("H", 1:20), paste0("D", 1:20))
+
+# complete linkage
+hc_complete_13 <- hclust(as.dist(1 - cor(data13)), method = "complete")
+plot(hc_complete_13, main = "Dendrogram by complete linkage")
+
+# average linkage
+hc_average_13 <- hclust(as.dist(1 - cor(data13)), method = "average")
+plot(hc_average_13, main = "Dendrogram by average linkage")
+
+# single linkage
+hc_single_13 <- hclust(as.dist(1 - cor(data13)), method = "single")
+plot(hc_single_13, main = "Dendrogram by single linkage")
+```
+
+### 12.13 (c) select the most significantly differential expressed genes
+
+The first method is applying a t-test to each group. We can select those with a FDR adjusted p-value less than a threshold 0.05
+
+```{r 12.13 (c) t-test}
+pvals <- p.adjust(apply(data13, 1, function(gene) t.test(gene[1:20], gene[21:40])$p.value))
+which(pvals < 0.05)
+
+# and we can choose the top 10 smallest genes
+order(pvals)[1:10]
+```
+
+The second method is calculate the variance difference between the two groups for each gene, then select the gene with the most dramatic change.
+
+The top 10 genes selected by these two methods are completely different, even the top 20 are also different. I would recommend choose by FDR adjusted p-value. It is more reliable statistically.
+
+```{r 12.13 (c) variance}
+variances <- apply(data13, 1, function(gene) var(gene[1:20]) + var(gene[21:40]))
+
+order(variances, decreasing = TRUE)[1:10]
+```
+
+## Conduct PLS on the Credit data, and compare your results to those from the PCR (Figure 6.20 in the textbook).
+
+I performed PLS and PCR on the Credit data seperately.
+
+In PLS, the lowest cross-validation error occurs when M = 3 components are used. 
+The corresponding test set MSE is 24203.98
+rmse is 155.5763
+
+After I performed PLS using the full data set, using M = 3, the result is:
+
+         1 comps  2 comps  3 comps
+X          45.46    56.34    66.19
+Balance    65.47    82.09    87.81
+
+In PCR, the lowest cross-validation error occurs when M = 5 components are used. 
+The corresponding test set MSE is 24152.44
+rmse is 155.4106
+
+After I performed PCR using the full data set, using M = 5, the result is:
+
+         1 comps  2 comps  3 comps  4 comps  5 comps
+X          45.46    56.34    66.19    82.39    99.94
+Balance    65.47    82.09    87.81    87.82    87.82
+
+The test MSE by PLS is comparable to, but slightly higher than, the test MSE obtained using PCR. It suggests that PCR is performing pretty well despite not considering response information during component selection.
+
+Notice that the percentage of variance in "Balance" that the 3 components PLS fit explains, 87.81 %, is almost as much as that explained using the 5 components PCR fit, 87.82 %. This is because PCR only attempts to maximize the amount of variance explained in the predictors, while PLS searches for directions that explain variance in both the predictors and the response. 
+
+```{r PLS and PCR}
+library(ISLR2)
+library(pls)
+library(caret) 
+
+# Remove categorical variables
+Credit_numeric <- Credit[, !(names(Credit) %in% c("Own", "Student", "Married", "Region"))]
+str(Credit_numeric)
+
+# Create train and test sets (60% training, 40% testing)
+set.seed(6)
+trainIndex <- createDataPartition(Credit_numeric$Balance, p = 0.6, list = FALSE)
+trainData <- Credit_numeric[trainIndex, ]
+testData <- Credit_numeric[-trainIndex, ]
+
+# Define response and predictor variables
+X_train <- trainData[, -ncol(trainData)] 
+Y_train <- trainData$Balance
+X_test <- testData[, -ncol(testData)]
+Y_test <- testData$Balance
+
+# PLS
+set.seed(6)
+pls.fit <- plsr(Balance ~ ., data = trainData, 
+                scale = T, validation = "CV") 
+summary(pls.fit)
+validationplot(pls.fit, val.type = "MSEP")
+
+# we can see from the plot and also the result that the lowest cross-validation error occurs when M = 3 components are used
+
+pls.pred <- predict(pls.fit, X_test, ncomp = which.min(pls.fit$validation$PRESS))
+mean((pls.pred - Y_test)^2)
+# we can also obtain "rmse" by
+sqrt(mean((pls.pred - Y_test)^2))
+
+# Finally, we perform PLS using the full data set, using M = 3
+
+pls.fit.full <- plsr(Balance ~ ., data = Credit_numeric, scale = TRUE, ncomp = 3)
+summary(pls.fit.full)
+
+# PCR
+
+set.seed(6)
+pcr.fit <- pcr(Balance ~ ., data = trainData, 
+               scale = T, validation = "CV")
+summary(pcr.fit)
+validationplot(pcr.fit, val.type = "MSEP")
+
+# we can see from the plot and also the result that the lowest cross-validation error occurs when M = 5 components are used
+
+pcr.pred <- predict(pcr.fit, X_test, ncomp = which.min(pcr.fit$validation$PRESS))
+mean((pcr.pred - Y_test)^2)
+# we can also obtain "rmse" by
+sqrt(mean((pcr.pred - Y_test)^2))
+
+# Finally, we perform PCR using the full data set, using M = 5
+
+pcr.fit.full <- plsr(Balance ~ ., data = Credit_numeric, scale = TRUE, ncomp = 5)
+summary(pcr.fit.full)
+```
