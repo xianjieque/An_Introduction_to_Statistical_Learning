@@ -1,0 +1,541 @@
+---
+title: "HW4_XianjieQue"
+output: html_document
+date: "2025-02-22"
+---
+
+## 5.2
+
+### 5.2 (a) What is the probability that the first bootstrap observation is not the jth observation from the original sample? Justify your answer.
+
+The probability that the first bootstrap observation is not the jth observation is:
+
+$1 - 1/n$ = $\frac{n-1}{n}$
+
+Since all observations have the same chance of being chosen, the probability is the number of favorable cases dividing by the total number of possible cases. That is, n−1 observations other than the jth observation dividing by the n total observations.
+
+### 5.2 (b) What is the probability that the second bootstrap observation is not the jth observation from the original sample?
+
+The probability that the second bootstrap observation is not the jth observation is also:
+
+$\frac{n-1}{n}$
+
+Since we sample with replacement, the justification is the same as in (a).
+
+### 5.2 (c) Argue that the probability that the jth observation is not in the bootstrap sample is (1 - 1/n)^n.
+
+We already proved that the probability of not taking the jth observation is $\frac{n-1}{n}$ = $1 - 1/n$. Now, we want to the probability of not having the jth observation in the whole bootstrap sample.
+
+Since choosing observations are independent, we need only multiply the probabilities of all events. So the probability of not taking the jth observation is $(1 - 1/n)^n$.
+
+### 5.2 (d) When n = 5, what is the probability that the jth observation is in the bootstrap sample?
+
+Having the jth observation in the bootstrap sample is the complementary event of not having the jth observation in any of the bootstrap samples.
+
+Using the result in (c) and n=5, P ≈ 0.67232
+
+```{r 5.2 (d)}
+n <- 5
+1 - (1 - 1/n)^n
+```
+
+### 5.2 (e) When n = 100, what is the probability that the jth observation is in the bootstrap sample?
+
+It's similar to (d) and we only need to change n=100. P ≈ 0.6339677
+
+```{r 5.2 (e)}
+n <- 100
+1 - (1 - 1/n)^n
+```
+
+### 5.2 (f) When n = 10,000, what is the probability that the jth observa- tion is in the bootstrap sample?
+
+It's similar to (f) and we only need to change n=10000. P ≈ 0.632139
+
+```{r 5.2 (f)}
+n <- 10000
+1 - (1 - 1/n)^n
+```
+
+### 5.2 (g) Create a plot and comment on what you observe.
+
+1 - (1/100000)^100000 ≈ 0.6321
+
+When n increases, the probability rapidly approaches 0.6321 and the graph is basically a straight line over the range [0,100000].
+
+To show the change more transparently, I also did a log transformation on the right graph.
+
+Note that $$e^x = \lim_{x \to \inf} \left(1 + \frac{x}{n}\right)^n,$$ 
+
+so with $x = -1$, we can see that our limit is $1 - e^{-1} = 1 - 1/e$.
+
+```{r 5.2 (g)}
+x <- sapply(1:100000, function(n) 1 - (1 - 1 / n)^n)
+
+par(mfrow=c(1,2))
+plot(x, type = "l", pch = 20,
+     xlab = "n", 
+     ylab = "Probability", 
+     ylim = c(0, 1),
+     main = "Probability of j-th")
+abline(h = 0.6321, col = "red", lty = 2)
+
+# log transformation
+plot(x, log = "x", type = "l", pch = 20,
+     xlab = "n (log scale)", 
+     ylab = "Probability", 
+     main = "Probability of j-th by log")
+abline(h = 0.6321, col = "red", lty = 2)
+```
+
+### 5.2 (h) We will now investigate numerically the probability that a bootstrap sample of size n = 100 contains the jth observation. Here j = 4. We repeatedly create bootstrap samples, and each time we record whether or not the fourth observation is contained in the bootstrap sample.
+
+First, the mean of 'store' here is the proportion of the 10,000 entries in 'store' that had value TRUE = 1. It also means the proportion of the 10,000 entries which contains the 4th observation. So we can consider it as the probability that a bootstrap sample of size n = 100 contains the jth observation.
+
+From the result in (e), the probability of including the 4th observation is $1 - (1 - 1/100)^{100}$ = 0.6339677
+
+Each time I run the code, I will get a different mean, but the mean is always close to the real probability, 0.63
+
+```{r 5.2 (h)}
+store <- rep(NA, 10000) 
+for(i in 1:10000){
+  store[i] <- sum(sample(1:100, rep=TRUE) == 4) > 0 
+  }
+mean(store)
+```
+
+## 5.5
+
+### 5.5 (a)
+
+```{r 5.5 (a)}
+# install.packages("ISLR2")
+library(ISLR2)
+
+str(Default)
+model_5_a <- glm(default ~ income + balance, data = Default, family = "binomial")
+summary(model_5_a)
+```
+
+### 5.5 (b)
+
+The mean of test error is 2.56%
+
+```{r 5.5 (b)}
+# i. Split the sample set into a training set and a validation set.
+
+# I choose 50% observations for training set.
+set.seed(4)
+train <- sample(10000, 5000)
+
+# ii. Fit a multiple logistic regression model using only the training observations.
+
+model_5_b <- glm(default ~ income + balance, 
+                 data = Default, subset = train,
+                 family = "binomial")
+summary(model_5_b)
+
+# iii. Obtain a prediction
+
+pred_valid_b <- ifelse(predict(model_5_b, newdata = Default[-train, ], 
+                             type = "response") > 0.5, "Yes", "No")
+pred_valid_b <- factor(pred_valid_b)
+summary(pred_valid_b)
+
+# iv. Compute the validation set error
+
+mean(Default[-train, ]$default != pred_valid_b)
+
+# So the mean of test error is 2.56%
+```
+
+### 5.5 (c)
+
+After repeating the process in (b) three times, I got three different means: 0.0246 0.0278 0.0252. The average test error is 0.02568 ≈ 0.0257
+
+There is some variation, and it depends on the samples allocated to training sets, as I expected. 
+
+Compared to the mean of test error in (b): 0.0256, these values are very close.
+
+```{r 5.5 (c)}
+# Repeat the process in (b) three times
+result_c <- c()
+
+set.seed(4)
+
+for (i in 1:3) {
+  train <- sample(10000, 5000)
+  
+  model_5_c <- glm(default ~ income + balance, 
+                   data = Default, subset = train,
+                   family = "binomial")
+  pred_valid_c <- ifelse(predict(model_5_b, newdata = Default[-train, ], 
+                                 type = "response") > 0.5, "Yes", "No")
+  pred_valid_c <- factor(pred_valid_c)
+  result_c[i] <- mean(Default[-train, ]$default != pred_valid_c)
+}
+
+result_c
+mean(result_c)
+```
+
+### 5.5 (d)
+
+The new mean of test error is 0.0262
+
+It's larger than the result in (b). Compared to three results in (c), it's only smaller than one of the three results.
+
+So it can be concluded that including "student" does not reduce the test error rate, at least does not seem to make a substantial improvement to the test error.
+
+```{r 5.5 (d)}
+set.seed(4)
+train <- sample(10000, 5000)
+model_5_d <- glm(default ~ income + balance + student, 
+                 data = Default, subset = train,
+                 family = "binomial")
+summary(model_5_d)
+
+pred_valid_d <- ifelse(predict(model_5_d, newdata = Default[-train, ], 
+                             type = "response") > 0.5, "Yes", "No")
+pred_valid_d <- factor(pred_valid_d)
+summary(pred_valid_d)
+
+mean(Default[-train, ]$default != pred_valid_d)
+```
+
+## 5.9
+
+### 5.9 (a)
+
+$\hat\mu$ is 22.53281
+
+```{r 5.9 (a)}
+str(Boston)
+mean(Boston$medv)
+```
+
+### 5.9 (b)
+
+The standard error of $\hat\mu$ is 0.4088611
+
+```{r 5.9 (b)}
+sd(Boston$medv) / sqrt(length(Boston$medv))
+```
+
+### 5.9 (c)
+
+The standard error estimated by using bootstrap is 0.4087221
+
+Although not identical, the estimate is the same to 3dp: 0.4087 vs 0.4089. They are very close.
+
+```{r 5.9 (c)}
+library(boot)
+boot.fn = function(vector, index)
+  + mean(vector[index])
+set.seed(4)
+boot_mean <- boot(Boston$medv, boot.fn, 10000)
+boot_mean
+```
+
+### 5.9 (d)
+
+The bootstrap 95% confidence interval is: [21.7154, 23.3503]
+
+In One Sample t-test, 95% confidence interval is: [21.72953, 23.33608]
+
+The two confidence interval estimates are the same to 1dp.
+
+```{r 5.9 (d)}
+# calculate the bootstrap 95% confidence interval
+boot_mean_SE <- sd(boot_mean$t)
+round(c(mean(Boston$medv) - 2*boot_mean_SE, mean(Boston$medv) + 2*boot_mean_SE), 4)
+
+# using t.test(Boston$medv)
+t.test(Boston$medv)
+```
+
+### 5.9 (e)
+
+The estimate of population median is the sample median: 21.2
+
+```{r 5.9 (e)}
+median(Boston$medv)
+```
+
+### 5.9 (f)
+
+The standard error estimated by using bootstrap is 0.3768153
+
+The standard error of median is quite small relative to the estimate, even smaller than the standard error of mean: 0.4087221. 
+
+Similarly, the standard error of mean is quite small relative to the estimate.
+
+```{r 5.9 (f)}
+boot.fn = function(vector, index)
+  + median(vector[index])
+set.seed(4)
+boot_median <- boot(Boston$medv, boot.fn, 10000)
+boot_median
+```
+
+### 5.9 (g)
+
+The estimated population 10th Percentile is 12.75
+
+```{r 5.9 (g)}
+quantile(Boston$medv, 0.1)
+```
+
+### 5.9 (h)
+
+The standard error estimated by using bootstrap is 0.500903
+
+The standard error of 10th Percentile is slightly larger relative to the estimate, also larger than the standard error of mean and median. 
+
+But it's still small, so we can be confident about the value of the 10th percentile.
+
+```{r 5.9 (h)}
+boot.fn = function(vector, index)
+  + quantile(vector[index], 0.1)
+set.seed(4)
+boot_quantile <- boot(Boston$medv, boot.fn, 10000)
+boot_quantile
+```
+
+## Additional Problem on Clustered bootstrap
+
+```{r Additional Problem on Clustered bootstrap }
+# generate clustered data
+set.seed(4)
+
+n_cluster <- 100
+n_individual <- 5
+
+ID <- rep(1:n_cluster, each = n_individual)
+
+a <- rnorm(n_cluster, mean = 0, sd = 1)
+a_i <- rep(a, each = n_individual)
+
+x_ij <- rbinom(n_cluster * n_individual, size = 1, prob = 0.5)
+
+e_ij <- rnorm(n_cluster * n_individual, mean = 0, sd = 1)
+
+y_ij <- a_i + 0.5 * x_ij + e_ij
+
+ori_data <- data.frame(ID, x_ij, y_ij)
+
+# generate clustered bootstrap samples
+clustered_boot <- sample(1:n_cluster, size = n_cluster, replace = TRUE)
+boot_data <- do.call(rbind, lapply(1:n_cluster, function(new_id) {
+  old_id <- clustered_boot[new_id] 
+  subset <- ori_data[ori_data$ID == old_id, ] 
+  subset$ID <- new_id  
+  return(subset)
+}))
+
+head(boot_data)
+```
+
+## 13.4
+
+### (a) Controlling Type I Error at α = 0.05
+
+If we control the Type I error for each individual hypothesis at α=0.05, we reject any null hypothesis where p<0.05
+
+From the given p-values in Table 13.4, we reject H01, H02, HO3, H08, H09, H10
+
+```{r 13.4 (a)}
+pvalue <- c(0.0011, 0.031, 0.017, 0.32, 0.11, 0.90, 0.07, 0.006, 0.004, 0.0009)
+names(pvalue) <- paste0("H", sprintf("%02d", 1:10))
+
+names(which(pvalue < 0.05))
+```
+
+### (b) Controlling FWER at α = 0.05
+
+To control FWER, we apply Bonferroni correction: α'= α/m = 0.05/10 = 0.005
+
+We reject null hypotheses where p<0.005.
+
+From the given p-values, we reject H01, H09, H10
+
+```{r 13.4 (b)}
+names(which(pvalue < 0.005))
+```
+
+### (c) Controlling FDR at q=0.05
+
+We apply the Benjamini-Hochberg (BH) procedure, which sorts the p-values in ascending order and finds the largest k such that: p <= k/m * 0.05
+
+H10 = 0.0009 < 0.005
+
+H01 = 0.0011 < 0.01
+
+H09 = 0.004 < 0.015
+
+H08 = 0.006 < 0.02
+
+H03 = 0.017 < 0.025
+
+H02 = 0.031 > 0.03
+
+H07 = 0.07 > 0.035
+
+H04 = 0.32 > 0.04
+
+H05 = 0.11 > 0.045
+
+H06 = 0.90 > 0.05
+
+So, we reject H01, H03, H08, H09, H10
+
+I also use R function to compute and get the result.
+
+```{r 13.4 (c)}
+names(which(p.adjust(pvalue, "fdr") < 0.05))
+```
+
+### (d) Controlling FDR at q=0.2
+
+Using the Benjamini-Hochberg method again with q=0.2:
+
+H10 = 0.0009 < 0.02
+
+H01 = 0.0011 < 0.04
+
+H09 = 0.004 < 0.06
+
+H08 = 0.006 < 0.08
+
+H03 = 0.017 < 0.1
+
+H02 = 0.031 < 0.12
+
+H07 = 0.07 < 0.14
+
+H04 = 0.32 > 0.16
+
+H05 = 0.11 < 0.18
+
+H06 = 0.90 > 0.2
+
+So, we reject all except H04 and H06, which is: H01, H02, H03, H05, H07, H08, H09, H10
+
+I also use R function to compute and get the result.
+
+```{r 13.4 (d)}
+names(which(p.adjust(pvalue, "fdr") < 0.2))
+```
+
+### (e)
+
+q = 0.2 means 20% rejections to be false positives. 
+
+Since in (d) we reject 8 hypotheses, 0.2 × 8 = 1.6
+
+So approximately 1 to 2 of the rejected hypotheses are likely false positives.
+
+And 1.6 ≈ 2, so I think 2 false positives are more likely.
+
+## 13.7
+
+### (a) Compute the p-values for each quantitative variable
+
+Excluding "Sales", the "Carseats" dataset includes these quantitative variables:
+
+CompPrice, Income, Advertising, Population, Price, Age, Education 
+
+```{r 13.7 (a)}
+library(ISLR2)
+head(Carseats)
+str(Carseats)
+
+quant_vars <- c("CompPrice", "Income", "Advertising", "Population", "Price", "Age", "Education")
+
+# Compute p-values for each variable
+p_values <- sapply(quant_vars, function(var) {
+  model <- lm(Sales ~ Carseats[[var]], data = Carseats)
+  summary(model)$coefficients[2,4]
+})
+
+p_values
+```
+
+### (b) Control Type I error at α=0.05
+
+This means we reject the null hypothesis for variables where the p-value is less than 0.05. 
+
+They are: "Income", "Advertising", "Price", "Age"  
+
+```{r 13.7 (b)}
+names(which(p_values < 0.05))
+```
+
+### (c) Control FWER at 0.05
+
+To control the FWER, I used the Bonferroni correction, which adjusts the significance threshold as α(Bonferroni) = 0.05/m
+
+And I reject the variables with a p-value below this adjusted threshold. 
+
+They are: "Income", "Advertising", "Price", "Age"
+ 
+```{r 13.7 (c)}
+names(which(p_values < 0.05 / length(quant_vars)))
+```
+
+### (d) Control FDR at 0.2
+
+I reject the variables: "Income", "Advertising", "Price", "Age"
+
+```{r 13.7 (d)}
+names(which(p.adjust(p_values, "fdr") < 0.2))
+```
+
+## Additional Problem
+
+### Let FDR=0.05. Suppose only 1% of 10,000 tests are truly significant. 
+
+### If we make 100 rejections, then α=? 
+
+Total hypotheses tested: 10,000
+
+H0 false: 1% = 100
+
+H0 true: 9,900
+
+FDR = 0.05 = V/R
+
+since R = 100, so V = 0.05×100 = 5
+
+α = V / H0 true = 5/9900 ≈ 0.000505
+
+### If we make 200 rejections, then α=?
+
+since R = 200, so V = 0.05×200 = 10
+
+α = V / H0 true = 10/9900 ≈ 0.00101
+
+### Let α =0.01. Suppose only 1% of 10,000 tests are truly significant. 
+
+### If we make 100 rejections, then FDR=?
+
+Total hypotheses tested: 10,000
+
+H0 false: 1% = 100
+
+H0 true: 9,900
+
+Since α = 0.01, V = α × 9900 = 0.01 × 9900 = 99
+
+Since we make 100 rejections, R = 100
+
+FDR = V/R = 99/100 = 0.99
+
+### If we make 200 rejections, then FDR=?
+
+Since α = 0.01, V = α × 9900 = 0.01 × 9900 = 99
+
+Since we make 200 rejections, R = 200
+
+FDR = V/R = 99/200 = 0.495
+
