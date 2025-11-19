@@ -1,0 +1,709 @@
+---
+title: "HW5_XianjieQue"
+author: "XianjieQue"
+date: "2025-02-25"
+output: html_document
+---
+
+## 8.2
+
+Assuming the question is focused on boosting regression trees.
+
+First, a decision tree with M terminal nodes ((M - 1) splits) is:
+
+$$
+f(X) = \sum_{m=1}^{M} c_m \cdot 1(X \in R_m)
+$$
+
+$c_m$ represents the mean of observations in region $R_m$.
+
+A decision stump is a tree with only two terminal nodes ($M = 2$), meaning it performs a single split. If the stump splits on variable $X_j$ at threshold $s$, it can be written as:
+
+$$
+f(X) = c_1 \cdot 1(X \in R_1) + c_2 \cdot 1(X \in R_2) =
+\begin{cases} 
+c_1 & \text{if } X_j < s \\ 
+c_2 & \text{if } X_j \geq s 
+\end{cases}
+= c_1 \cdot I(X_j < s) + c_2 \cdot I(X_j \geq s)
+$$
+
+Boosting doesn’t use just one stump but a sequence of $B$ stumps. I define:
+
+- $b = 1,2, \dots, B$ as the iteration index.
+- Each stump splits on a variable $X_{j_b}$, selected from $X_1, X_2, \dots, X_p$.
+- Each stump has a threshold $s_b$.
+- The predictions for each region are $\alpha_b$ and $\beta_b$.
+
+Thus, at iteration $b$, the weak learner is:
+
+$$
+\hat{f}_b(X) = \alpha_b \cdot I(X_{j_b} < s_b) + \beta_b \cdot I(X_{j_b} \geq s_b)
+$$
+
+Following Algorithm 8.2:
+
+#### Step 1: Initialization
+
+We start with $\hat{f}(X) = 0$ and initialize residuals as:
+
+$$
+r_i = y_i, \quad \text{for all } i
+$$
+
+#### Step 2: Iterative Boosting
+
+For each iteration $b = 1, \dots, B$:
+
+Iteration 1 ($b = 1$):
+
+train a stump:
+
+$$
+\hat{f}_1(X) = \alpha_1 \cdot I(X_{j_1} < s_1) + \beta_1 \cdot I(X_{j_1} \geq s_1)
+$$
+
+update the model:
+
+$$
+\hat{f}(X) \leftarrow \hat{f}(X) + \lambda \hat{f}_1(X) = \lambda \hat{f}_1(X)
+$$
+
+update the residuals:
+
+$$
+r_i \leftarrow r_i - \lambda \hat{f}_1(X) = y_i - \lambda \hat{f}_1(X)
+$$
+
+Iteration 2 ($b = 2$):
+
+train another stump:
+
+$$
+\hat{f}_2(X) = \alpha_2 \cdot I(X_{j_2} < s_2) + \beta_2 \cdot I(X_{j_2} \geq s_2)
+$$
+
+update the model:
+
+$$
+\hat{f}(X) \leftarrow \hat{f}(X) + \lambda \hat{f}_2(X) = \lambda \hat{f}_1(X) + \lambda \hat{f}_2(X)
+$$
+
+update the residuals:
+
+$$
+r_i \leftarrow r_i - \lambda \hat{f}_2(X) = y_i - \lambda \hat{f}_1(X) - \lambda \hat{f}_2(X)
+$$
+
+until $B$ iterations:
+
+At the final iteration ($b = B$):
+
+$$
+\hat{f}_B(X) = \alpha_B \cdot I(X_{j_B} < s_B) + \beta_B \cdot I(X_{j_B} \geq s_B)
+$$
+
+update the model:
+
+$$
+\hat{f}(X) \leftarrow \hat{f}(X) + \lambda \hat{f}_B(X) = \sum_{b=1}^{B} \lambda \hat{f}_b(X)
+$$
+
+final residuals:
+
+$$
+r_i \leftarrow r_i - \lambda \hat{f}_B(X) = y_i - \sum_{b=1}^{B} \lambda \hat{f}_b(X)
+$$
+
+After $B$ boosting iterations, the final model is:
+
+$$
+\hat{f}(X) = \sum_{b=1}^{B} \lambda \hat{f}_b(X) =
+\lambda \sum_{b=1}^{B} \big[ \alpha_b \cdot I(X_{j_b} < s_b) + \beta_b \cdot I(X_{j_b} \geq s_b) \big]
+$$
+
+Since the splitting variables $X_{j_1}, X_{j_2}, \dots, X_{j_B}$ are chosen from $X_1, X_2, \dots, X_p$, this ultimately forms an additive model:
+
+$$
+f(X) = \sum_{j=1}^{p} f_j(X_j)
+$$
+
+## 8.5 
+
+the final classification under Majority Vote: Red
+the final classification under Average Probability: Green
+
+```{r}
+x <- c(0.1, 0.15, 0.2, 0.2, 0.55, 0.6, 0.6, 0.65, 0.7, 0.75)
+
+ifelse(sum(x >= 0.5) > sum(x < 0.5), "red", "green") # majority vote
+ifelse(mean(x) > 0.5, "red", "green") # average probability
+```
+
+## 8.8
+
+### 8.8 (a) Split the data set into a training set and a test set.
+
+```{r 8.8 (a)}
+# install.packages("ISLR2")
+# install.packages("tree")
+# install.packages("randomForest")
+# install.packages("BART")
+# install.packages("gbm")
+# install.packages("ggplot2")
+# install.packages("caret")
+
+library(ISLR2)
+library(tree)
+library(randomForest)
+library(dplyr)
+library(BART)
+library(gbm)
+library(ggplot2)
+library(caret)
+
+set.seed(5)
+
+train_index_8a <- sample(1:nrow(Carseats), nrow(Carseats) / 2)
+
+train_8a <- Carseats[train_index_8a, ] 
+test_8a <- Carseats[-train_index_8a, ] 
+```
+
+### 8.8 (b) Regression Tree Plot
+
+interpret the results:
+
+summary(reg_tree_8b) lists the variables that are used as internal nodes in the tree and the number of terminal nodes.
+
+6 variables are used as internal nodes. "ShelveLoc" and "Price" are the two most important factors in predicting Sales, since they are on the top of the tree (means they provided the best split of the data).
+
+The tree has a total of 20 terminal nodes.
+
+The test MSE associated with the regression tree is 5.041825
+
+```{r 8.8 (b)}
+reg_tree_8b <- tree(Sales ~ ., train_8a)
+
+summary(reg_tree_8b)
+plot(reg_tree_8b)
+text(reg_tree_8b, pretty = 0, cex = 0.7)
+
+# test MSE
+pred_sale <- predict(reg_tree_8b, test_8a)
+mean((pred_sale - test_8a$Sales)^2)
+```
+
+### 8.8 (c) Cross-Validation
+
+The optimal level of tree complexity is 20 terminal nodes.
+
+I select the full tree with 20 terminal nodes (best = 20), and the test MSE is 5.041825. It is the same as in 8.8 (b).
+
+Pruning the tree doesn't improve the test MSE because the optimal tree is the fully grown tree without any pruning.
+
+```{r 8.8 (c)}
+set.seed(5)
+cv_tree_8c <- cv.tree(reg_tree_8b)
+plot(cv_tree_8c$size, cv_tree_8c$dev, type = "b", 
+     xlab = "Tree size", ylab = "Deviance")
+min <- which.min(cv_tree_8c$dev)
+abline(v = cv_tree_8c$size[min], lty = 2, col = "red")
+cv_tree_8c$size[min]
+
+# prune the tree
+prune_tree_8c <- prune.tree(reg_tree_8b, best = 20)
+pred_prune_sale <- predict(prune_tree_8c, test_8a)
+mean((pred_prune_sale - test_8a$Sales)^2)
+```
+
+### 8.8 (d) bagging approach
+
+The test MSE is 2.616456, which is a substantial improvement over the pruned regression tree in 8.8 (c). It nearly reduces by 50%.
+
+Based on "importance" result, "ShelveLoc" and "Price" are the two most important variables.
+
+```{r 8.8 (d)}
+set.seed(5)
+bagged_8d <- randomForest(Sales ~ ., data = train_8a,
+                               mtry = ncol(train_8a) - 1,
+                               importance = T)
+pred_bagged_sale <- predict(bagged_8d, test_8a)
+mean((pred_bagged_sale - test_8a$Sales)^2)
+
+importance(bagged_8d)%>%
+  as.data.frame() %>%
+  arrange(desc(IncNodePurity))
+```
+
+### 8.8 (e) random forests 
+
+Increasing "mtry" quickly reduces the error rate, with the mtry = 1 model performing about the same as a single decision tree. We can observe a monotonic reduction in the error rate as mtry increases. 
+
+When mtry = 10, the error rate obtains min value, 2.616456, which is a substantial improvement over the pruned regression tree and equal to the bagging approach. 
+
+Based on "importance" result, "ShelveLoc" and "Price" are the two most important variables.
+
+```{r 8.8 (e)}
+test_MSE <- c()
+i <- 1
+for (Mtry in 1:10) {
+  set.seed(5)
+  rf_8e <- randomForest(Sales ~ ., data = train_8a,
+                          mtry = Mtry, 
+                          importance = T)
+  
+  pred_8e <- predict(rf_8e, test_8a)
+  
+  test_MSE[i] <- mean((pred_8e - test_8a$Sales)^2)
+  
+  i <- i + 1
+}
+
+mtry <- 1:10
+plot(mtry, test_MSE, type = "b", 
+     xlab = "mtry", ylab = "Test MSE")
+min_8e <- which.min(test_MSE)
+abline(v = mtry[min_8e], lty = 2, col = "red")
+mtry[min_8e]
+
+min(test_MSE)
+
+importance(rf_8e)%>%
+  as.data.frame() %>%
+  arrange(desc(IncNodePurity))
+```
+
+### 8.8 (f) BART
+
+The test error of BART is 1.594965, lower than the test error of random forests and boosting.
+
+We can also check how many times each variable appeared in the collection of trees.
+
+```{r 8.8 (f)}
+str(Carseats) # "Sales" is the first column in all of 11 columns
+
+bart_8f <- gbart(train_8a[, 2:11], train_8a[, 1],
+  x.test = test_8a[, 2:11]
+)
+
+yhat.bart <- bart_8f$yhat.test.mean 
+mean((yhat.bart - test_8a$Sales)^2)
+
+ord <- order(bart_8f$varcount.mean, decreasing = T) 
+bart_8f$varcount.mean[ord]
+```
+
+## 8.9
+
+### 8.9 (a)
+
+```{r 8.9 (a)}
+str(OJ)
+
+set.seed(5)
+
+train_index_9a <- sample(1:nrow(OJ), 800)
+
+train_9a <- OJ[train_index_9a, ] 
+test_9a <- OJ[-train_index_9a, ] 
+```
+
+### 8.9 (b) Classification Tree
+
+The training error rate of 16.62% and the classification tree has 9 terminal nodes.
+
+Although there are 17 predictors in the dataset (18 - "Purchase"), only 3 are used in splits. They are "LoyalCH", "PriceDiff" and "ListPriceDiff".
+
+```{r 8.9 (b)}
+OJ_tree_9b = tree(Purchase ~ ., train_9a)
+summary(OJ_tree_9b)
+```
+
+### 8.9 (c) a detailed text output
+
+I choose Node 15), which is a terminal node marked by *:
+
+15) LoyalCH > 0.705326 288   99.77 CH ( 0.95833 0.04167 ) *
+
+Starting from the root node: 
+
+1) root 800 1068.00 CH ( 0.61250 0.38750 )  
+
+It means at the root node, there are 800 observations, the deviance is 1064.00, the overall prediction is CH and the split is 61.25% CH vs 38.75% MM.
+
+From the root node, three splits take place to produce Node 15):
+
+A split at LoyalCH = 0.5036
+A split at PriceDiff = -0.39
+A split at LoyalCH = 0.705326
+
+Node 15) is therefore the subset of purchases where LoyalCH > 0.705326 and PriceDiff > -0.39. The overall prediction is CH, and the node seems quite pure with 95.833% CH vs 4.167% MM.
+
+There are 288 observations in Node 15), and from the percentages above we know that 276/288 are CH and 12/288 are MM.
+
+Also, we can calculate the deviance of Node 15) by the formula. The result is same as 99.77
+
+```{r 8.9 (c)}
+OJ_tree_9b
+
+# calculate the percentage in Node 15)
+train_9a %>%
+  filter(LoyalCH > 0.705326, 
+         PriceDiff > -0.39) %>%
+  select(Purchase) %>% 
+  table()
+
+# calculate the deviance in Node 15)
+-2 * (276 * log(276/288) + 12 * log(12/288))
+```
+
+### 8.9 (d) plot
+
+"LoyalCH" is the most important variable (the root node splits on this variable), followed by "PriceDiff" and "ListPriceDiff". Node 15) is the last terminal node.(from left)
+
+LoyalCH ranges from 0 to 1, so the first split sends those less LoyalCH orange juice to the left and those more loyal to the right. 
+
+Those that scored lowest in LoyalCH (LoyalCH < 0.280875) were predicted to buy MM. Those that were slightly more loyal to CH (0.280875 < LoyalCH < 0.5036) would still buy MM if it wasn’t too much more expensive (PriceDiff < 0.05), but if the price difference is large than 0.05 (CH was much cheaper) they could end up purchasing CH.
+
+Those on the far-right terminal node are the more loyal to CH (LoyalCH > 0.5036), so it should be unsurprising that CH is their predicted purchase. However, there is a exceptation. Those with slightly lower brand loyalty (0.5036 < LoyalCH < 0.638841),  would purchase MM if it was cheaper (PriceDiff < -0.39).
+
+In summary, people go with the brand they are more loyal towards, but there are some edge cases (based on the prices relative to one another) that can sway people against their usual brand loyalties.
+
+Besides, There are 3 split points worthy to note: 
+LoyalCH < 0.0356415
+LoyalCH < 0.705326 
+ListPriceDiff < 0.255
+The predicted categories of the terminal nodes after these 3 splits remain the same. These appear to be unnecessary splits. It is possible that the splits resulted in sufficient impurity reduction, leading the algorithm to proceed with them.
+
+```{r 8.9 (d)}
+plot(OJ_tree_9b)
+text(OJ_tree_9b, pretty = 0, cex = 0.7)
+```
+
+### 8.9 (e) predict and test error rate
+
+The test error rate is 17.41%
+
+```{r 8.9 (e)}
+# produce a confusion matrix
+pred_9e <- predict(OJ_tree_9b, test_9a, type = "class")
+table(pred_9e, actual_test = test_9a$Purchase)
+
+# calculate the test error rate
+(32 + 15)/(148 + 75 + 32 + 15)
+1 - mean(pred_9e == test_9a$Purchase)
+```
+
+### 8.9 (f) determine the optimal tree size
+
+The tree with 9 terminal nodes results in only 148 cross-validation errors, which is the lowest cross-validated classification error rate. 
+So, the optimal tree size is with 9 terminal nodes.
+
+```{r 8.9 (f)}
+set.seed(5)
+cv_OJ_9f <- cv.tree(OJ_tree_9b, FUN=prune.misclass)
+cv_OJ_9f
+```
+
+### 8.9 (g) plot
+
+The plot also shows the tree with 9 terminal nodes results in the lowest cross-validated classification error rate. 
+
+```{r 8.9 (g)}
+plot(cv_OJ_9f$size, cv_OJ_9f$dev, type = "b",
+     xlab = "Tree size", ylab = "# of CV errors")
+min <- which.min(cv_OJ_9f$dev)
+abline(v = cv_OJ_9f$size[min], lty = 2, col = "red")
+cv_OJ_9f$size[min]
+```
+
+### 8.9 (h)
+
+From the above results, the tree with 9 terminal nodes corresponds to the lowest cross-validated classification error rate, which is 148.
+
+### 8.9 (i) Produce a pruned tree
+
+Notice! After cross-validation, the optimal tree size is with 9 terminal nodes, same as the unpruned tree size. Cross-validation does not lead to selection of a pruned tree, so I create a pruned tree with 5 terminal nodes here.
+
+```{r 8.9 (i)}
+prune_OJ_9i <- prune.misclass(OJ_tree_9b, best = 5) 
+prune_OJ_9i
+plot(prune_OJ_9i)
+text(prune_OJ_9i, pretty = 0, cex = 0.7)
+```
+
+### 8.9 (j) Compare the training error rates
+
+0.16625 < 0.1675
+
+The training error for the pruned tree is higher. 
+
+It's not surprising because the training error of a tree to monotonically decrease as its flexibility (number of splits) increases.
+
+```{r 8.9 (j)}
+# the unpruned tree (9 terminal nodes)
+mean(predict(OJ_tree_9b, type = "class") != train_9a$Purchase)
+
+# the pruned tree (5 terminal nodes)
+mean(predict(prune_OJ_9i, type = "class") != train_9a$Purchase)
+```
+
+### 8.9 (k)  Compare the test error rates 
+
+0.1740741 < 0.1777778
+
+The test error for the pruned tree is higher. 
+
+This is contrary to my expectation. I thought the pruned tree would perform better on the test data set. 
+
+But this is because the pruned tree I used is not the optimal tree size selected through Cross-validation! The pruned tree I used here is the one I got in question 9 (i) which asked me to create a pruned tree with 5 terminal nodes. It is not the optimal tree size. In fact, the unpruned tree with 9 terminal nodes is already the optimal tree size. Therefore, the test error of “the pruned tree” will be higher than that of “unpruned tree”. Because the “unpruned tree” with 9 terminal nodes here is actually the optimal tree size.
+
+```{r 8.9 (k)}
+# the unpruned tree (9 terminal nodes)
+mean(predict(OJ_tree_9b, type = "class", newdata = test_9a) != test_9a$Purchase)
+
+# the pruned tree (5 terminal nodes)
+mean(predict(prune_OJ_9i, type = "class", newdata = test_9a) != test_9a$Purchase)
+```
+
+## 8.10
+
+### 8.10 (a) missing data and log-transform
+
+```{r 8.10 (a)}
+str(Hitters)
+
+sum(is.na(Hitters$Salary)) # 59
+
+Hitters_nNA <- Hitters[!is.na(Hitters$Salary), ]
+Hitters_nNA$log_Salary <- log(Hitters_nNA$Salary)
+```
+
+### 8.10 (b) split training data set and test data set
+
+```{r 8.10 (b)}
+set.seed(5)
+
+train_index_10b <- sample(1:nrow(Hitters_nNA), 200)
+
+train_10b <- Hitters_nNA[train_index_10b, ] 
+test_10b <- Hitters_nNA[-train_index_10b, ] 
+```
+
+### 8.10 (c) use a range of shrinkage values and plot
+
+Since I log-transformed the salaries in 10(a), I use the new variable "log_Salary" for all questions.
+
+I plot the results with X axis on a log10 scale. 
+
+The training MSE decreases as shrinkage values increase.
+
+```{r 8.10 (c)_1}
+set.seed(5)
+lambda_seq <- 10^seq(-7, 0, 0.1)
+train_MSE <- c()
+test_MSE <- c()
+
+for (i in 1:length(lambda_seq)) {
+boost_10c <- gbm(log_Salary ~ . - Salary, data = train_10b,
+                 distribution = "gaussian", n.trees = 1000, 
+                 interaction.depth = 4,   #  choosing interaction.depth = 4
+                 shrinkage = lambda_seq[i])
+ train_MSE[i] <- mean((predict(boost_10c, n.trees = 1000) - train_10b$log_Salary)^2)
+  
+  test_MSE[i] <- mean((predict(boost_10c, test_10b, n.trees = 1000) - test_10b$log_Salary)^2)
+}
+```
+
+```{r 8.10 (c)_2}
+data.frame(lambda = lambda_seq, train_MSE) %>%
+  ggplot(aes(x = lambda, y = train_MSE)) + 
+  geom_point(size = 2, col = "blue") + 
+  geom_line(col = "black") + 
+  scale_x_continuous(trans = 'log10', breaks = 10^seq(-7, 0), labels = 10^seq(-7, 0), minor_breaks = NULL) + 
+  labs(x = "Lambda (Shrinkage)", 
+       y = "Training MSE")
+```
+
+### 8.10 (d) plot shrinkage values and test MSE
+
+I've created the vector test_MSE in 10 (c) above.
+
+As the shrinkage values increase, the corresponding change in test MSE differs from that of the training MSE; its variation is more complex.
+
+```{r 8.10 (d)}
+data.frame(lambda = lambda_seq, test_MSE) %>%
+  ggplot(aes(x = lambda, y = test_MSE)) + 
+  geom_point(size = 2, col = "blue") + 
+  geom_line(col = "black") + 
+  scale_x_continuous(trans = 'log10', breaks = 10^seq(-7, 0), labels = 10^seq(-7, 0), minor_breaks = NULL) + 
+  labs(x = "Lambda (Shrinkage)", 
+       y = "Test MSE")
+```
+
+### 8.10 (e) Boosting vs Linear Regression vs Lasso
+
+I choose the following three methods for comparison:
+
+Boosting ( The test MSE for the optimal shrinkage is 0.2444733 )
+
+Linear Regression ( The test MSE for Linear Regression is 0.3766676 )
+
+Lasso Regression ( The test MSE for Lasso Regression is 0.4137584 )
+
+Conclusion: Boosting is the best-performing model in this case, followed by Linear Regression and then Lasso Regression. This suggests that Boosting captures complex relationships in the data better than the linear models. Linear Regression (0.3767) performs better than Lasso Regression (0.4138) but is still not as good as Boosting. Lasso Regression has the highest test MSE, suggesting that Lasso’s feature selection might have removed some important variables.
+
+Below are the details.
+
+First, I use Boosting to obtain the optimal value of shrinkage and the test MSE.
+
+The optimal value of shrinkage is: 0.006309573 
+
+The test MSE for the optimal shrinkage is: 0.2444733
+
+```{r 8.10 (e) Boosting}
+set.seed(5)
+
+k_folds <- 5
+folds <- createFolds(train_10b$log_Salary, k = k_folds, list = TRUE, returnTrain = TRUE)
+
+lambda_seq <- 10^seq(-7, 0, 0.1)
+cv_results <- data.frame(lambda = lambda_seq, CV_MSE = rep(NA, length(lambda_seq)))
+
+for (i in 1:length(lambda_seq)) {
+  shrinkage_val <- lambda_seq[i]
+  fold_MSE <- c() 
+  for (fold in folds) {
+    train_fold <- train_10b[fold, ]
+    test_fold <- train_10b[-fold, ]
+    model_gbm <- gbm(log_Salary ~ . - Salary, 
+                     data = train_fold, 
+                     distribution = "gaussian", 
+                     n.trees = 1000, 
+                     interaction.depth = 4, 
+                     n.minobsinnode = 10, 
+                     shrinkage = shrinkage_val, 
+                     verbose = FALSE)
+    
+    predictions <- predict(model_gbm, test_fold, n.trees = 1000)
+    MSE <- mean((predictions - test_fold$log_Salary)^2)
+    fold_MSE <- c(fold_MSE, MSE)
+  }
+  
+  cv_results$CV_MSE[i] <- mean(fold_MSE)
+}
+
+best_lambda <- cv_results$lambda[which.min(cv_results$CV_MSE)]
+
+ggplot(cv_results, aes(x = lambda, y = CV_MSE)) + 
+  geom_line(col = "black") + 
+  geom_point(size = 2, aes(col = (lambda == best_lambda))) + 
+  scale_x_continuous(trans = 'log10', breaks = 10^seq(-7, 0), labels = 10^seq(-7, 0), minor_breaks = NULL) + 
+  scale_color_manual(values = c("blue", "green")) + 
+  theme(legend.position = "none") + 
+  labs(title = "Hitters Dataset - Boosting", 
+       subtitle = "Selecting shrinkage parameter using cross-validation",
+       x = "Lambda (Shrinkage)", 
+       y = "CV MSE")
+
+# use best lambda (shrinkage) to obtain final model
+best_model_gbm <- gbm(log_Salary ~ . - Salary, 
+                       data = train_10b, 
+                       distribution = "gaussian", 
+                       n.trees = 1000, 
+                       interaction.depth = 4, 
+                       n.minobsinnode = 10, 
+                       shrinkage = best_lambda, 
+                       verbose = FALSE)
+test_pred_gbm <- predict(best_model_gbm, test_10b)
+
+test_MSE_gbm <- mean((test_pred_gbm - test_10b$log_Salary)^2)
+
+cat("The optimal value of shrinkage is:", best_lambda, "\n")
+cat("The test MSE for the optimal shrinkage is:", test_MSE_gbm, "\n")
+```
+ 
+Second, I use Linear Regression to obtain the test MSE.
+
+The test MSE for Linear Regression is: 0.3766676 
+
+```{r 8.10 (e) Linear Regression}
+linear_model <- lm(log_Salary ~ . - Salary, data = train_10b)
+
+test_pred_lm <- predict(linear_model, test_10b)
+
+test_MSE_lm <- mean((test_pred_lm - test_10b$log_Salary)^2)
+
+cat("The test MSE for Linear Regression is:", test_MSE_lm, "\n")
+```
+
+Third, I use Lasso Regression to obtain the optimal value of shrinkage and the test MSE.
+
+The optimal lambda for Lasso Regression is: 0.02084462 
+
+The test MSE for Lasso Regression is: 0.4137584 
+
+```{r 8.10 (e) Lasso Regression}
+library(glmnet)
+
+x_train <- model.matrix(log_Salary ~ . - Salary, data = train_10b)[, -1]
+y_train <- train_10b$log_Salary
+
+x_test <- model.matrix(log_Salary ~ . - Salary, data = test_10b)[, -1]
+
+set.seed(5)
+lasso_cv <- cv.glmnet(x_train, y_train, alpha = 1) 
+best_lambda_lasso <- lasso_cv$lambda.min  
+
+lasso_model <- glmnet(x_train, y_train, alpha = 1, lambda = best_lambda_lasso)
+
+test_pred_lasso <- predict(lasso_model, s = best_lambda_lasso, newx = x_test)
+
+test_MSE_lasso <- mean((test_pred_lasso - test_10b$log_Salary)^2)
+
+cat("The optimal lambda for Lasso Regression is:", best_lambda_lasso, "\n")
+cat("The test MSE for Lasso Regression is:", test_MSE_lasso, "\n")
+
+# check which variables are selected by lasso
+
+lasso_coefficients <- coef(lasso_model, s = best_lambda_lasso)
+lasso_coefficients
+```
+
+### 8.10 (f) the most important predictors
+
+From the result, the table and barplot shows that "CAtBat = Number of times at bat during his career" is the most important variable in the model. After that, "CRuns", "CHits" and "CRBI" are all of similar importance. 
+
+I also found that the most important variables are all about career.
+
+Compared to the "lasso_coefficients", lasso seleted out "CAtBat" and "CRuns", the two most important variables. The coefficients of "CHits" and "CRBI" are also quite small. The loss of most important predictors may explain why lasso regression doesn't perform well in 10 (d).
+
+```{r 8.10 (f)}
+summary(best_model_gbm)
+```
+
+### 8.10 (g) bagging
+
+The test MSE for bagging is 0.1780639
+
+```{r 8.10 (g)}
+set.seed(5)
+
+bagged_10g <- randomForest(log_Salary ~ . - Salary, data = train_10b,
+                           mtry = (ncol(train_10b)-2),
+                           importance = TRUE,
+                           ntree = 1000)
+pred_bag_10g <- predict(bagged_10g, newdata = test_10b) 
+mean((pred_bag_10g - test_10b$log_Salary)^2)
+```
+
+Compared all the test MSE, bagging performs better than boosting, and tree-based methods perform better than  linear methods.
+
+```{r}
+bagging_test <- mean((pred_bag_10g - test_10b$log_Salary)^2)
+
+data.frame(method = c("Boosting", "Linear Regression", "Lasso", "Bagging"), 
+           test_MSE = c(test_MSE_gbm, test_MSE_lm, test_MSE_lasso, bagging_test)) %>%
+  arrange(test_MSE)
+```

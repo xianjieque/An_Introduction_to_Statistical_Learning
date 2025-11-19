@@ -1,0 +1,230 @@
+---
+title: "hw8_XianjieQue"
+author: "XianjieQue"
+date: "2025-04-13"
+output: html_document
+---
+
+### load packages
+
+```{r load packages}
+library(ggplot2)
+library(e1071)
+library(ISLR)
+library(tidyverse)
+```
+
+### Conceptual: 1 (a) Sketch the hyperplane 1 + 3X1 − X2 = 0
+
+```{r 1 (a)}
+x_vals <- seq(-5, 5, length.out = 200)
+hyperplane1 <- data.frame(
+  X1 = x_vals,
+  X2 = 1 + 3 * x_vals
+)
+
+ggplot(hyperplane1, aes(x = X1, y = X2)) +
+  geom_line(color = "black", size = 1.2) +
+  geom_text(aes(x = 0, y = 1 + 3*(0) - 10, label = "1 + 3X_1 − X_2 > 0"), color = "red", size = 5) +
+  geom_text(aes(x = 0, y = 1 + 3*(0) + 10, label = "1 + 3X_1 − X_2 < 0"), color = "blue", size = 5) +
+  labs(title = "Hyperplane: 1 + 3X_1 - X_2 = 0",
+       x = "X_1", y = "X_2")
+```
+
+### Conceptual: 1 (b) sketch the hyperplane −2 + X1 + 2X2 = 0
+
+```{r 1 (b) }
+hyperplane2 <- data.frame(
+  X1 = x_vals,
+  X2 = (-2 + x_vals) / -2
+)
+
+ggplot(hyperplane2, aes(x = X1, y = X2)) +
+  geom_line(color = "black", size = 1.2) +
+  geom_text(aes(x = 0, y = (-2 + (0)) / -2 + 2, label = "−2 + X_1 + 2X_2 > 0"), color = "red", size = 5) +
+  geom_text(aes(x = 0, y = (-2 + (0)) / -2 - 1.5, label = "−2 + X_1 + 2X_2 < 0"), color = "blue", size = 5) +
+  labs(title = "Hyperplane: -2 + X_1 + 2X_2 = 0",
+       x = "X_1", y = "X_2")
+```
+
+### Conceptual: 2 (a) 
+
+Sketch the curve $(1 + X_1)^2 + (2 - X_2)^2 = 4$
+
+This is a circle centered at (−1,2) with radius 2.
+
+```{r 2 (a) }
+theta <- seq(0, 2*pi, length.out = 300)
+circle <- data.frame(
+  X1 = -1 + 2 * cos(theta),
+  X2 = 2 + 2 * sin(theta)
+)
+
+ggplot(circle, aes(x = X1, y = X2)) +
+  geom_path(color = "black", size = 1.2) +
+  geom_point(aes(x = -1, y = 2), color = "black", size = 3) +
+  annotate("text", x = -1, y = 4.5, label = "(1 + X_1)^2 + (2 - X_2)^2 > 4", color = "red") +
+  annotate("text", x = -1, y = 1, label = "(1 + X_1)^2 + (2 - X_2)^2 ≤ 4", color = "blue") +
+  labs(title = "Non-linear Boundary: (1 + X_1)^2 + (2 - X_2)^2 = 4",
+       x = "X_1", y = "X_2") +
+  coord_fixed()
+```
+
+### Conceptual: 2 (b)
+
+Inside or on the circle: $(1 + X_1)^2 + (2 - X_2)^2 ≤ 4$
+
+The points are in blue
+
+Outside the circle: $(1 + X_1)^2 + (2 - X_2)^2 > 4$
+
+The points are in red
+
+### Conceptual: 2 (c)
+
+Classifier rule: assign to red if $(1 + X_1)^2 + (2 - X_2)^2 > 4$, otherwise blue.
+
+(0, 0) (2, 2) (3, 8) are classified to red
+
+(−1, 1) is classified to blue
+
+```{r 2 (c) }
+points_to_check <- data.frame(
+  X1 = c(0, -1, 2, 3),
+  X2 = c(0, 1, 2, 8)
+)
+
+points_to_check$result <- (1 + points_to_check$X1)^2 + (2 - points_to_check$X2)^2
+points_to_check$class <- ifelse(points_to_check$result > 4, "Red", "Blue")
+points_to_check
+```
+
+### Conceptual: 2 (d)
+
+The expression $(1 + X_1)^2 + (2 - X_2)^2 = 4$ expands to:
+
+$$
+(1 + X_1)^2 + (2 − X_2)^2 \\ = X_1^2 + 2X_1 + 1 + 4 − 4X_2 + X_2^2 \\ = X_1^2 + X_2^2 + 2X_1 - 4X_2 + 5
+$$
+This is non-linear in terms of $X_1$ and $X_2$, but linear in the extended feature space including $X_1^2$, $X_2^2$, $X_1$, $X_2$.
+
+For example, we can define:
+
+$$
+Z_1 = X_1 \\ Z_2 = X_2 \\ Z_3 = X_1^2 \\ Z_4 = X_2^2
+$$
+
+the boundary becomes $Z_3 + Z_4 + 2Z_1 - 4Z_2 + 5$, and it is linear in $Z_1$, $Z_2$, $Z_3$, $Z_4$.
+
+### Applied: 7 (a) Create binary variable for high/low gas mileage
+
+```{r 7 (a)}
+set.seed(8)
+
+Auto <- na.omit(Auto)
+Auto$mpg01 <- ifelse(Auto$mpg > median(Auto$mpg), 1, 0)
+
+# Prepare data: remove mpg, name
+Auto_svm <- Auto %>% select(-mpg, -name)
+
+Auto_svm$mpg01 <- as.factor(Auto_svm$mpg01)
+```
+
+### Applied: 7 (b) Linear SVM with different cost values
+
+From the output, the optimal cost value is 10, and the corresponding best performance (error) is 0.08679487
+
+Overall, the CV_Error is in the range 0.087–0.13, indicates that the test error is about 9%~13%, which means that the correct prediction ratio on the test set is about 87%~91%, which is a good performance.
+
+From the trend of change, as the cost increases (the penalty increases), the error decreases at first and then increases, then decreases again, till it reaches 0.087 at cost = 10, then stay stable.
+
+Low cost values may under-penalize misclassifications, leading to wider margins and higher error.
+
+Lowest error values appear at cost = 10 and above — indicating that with higher cost values, the classifier penalizes misclassifications more and forms tighter decision boundaries, improving accuracy.
+
+```{r 7 (b)}
+cost_values <- c(0.001, 0.01, 0.1, 1, 5, 10, 100, 1000)
+
+tune.out.linear <- tune(svm, mpg01 ~ ., data = Auto_svm, kernel = "linear", 
+                        ranges = list(cost = cost_values))
+print(summary(tune.out.linear)) 
+```
+
+### Applied: 7 (c) Radial and Polynomial Kernel SVMs
+
+For Radial Kernel SVM:
+
+From the output, the optimal parameters are: cost value is 1 and gamma is 1, and the corresponding best performance (error) is 0.07378205 
+
+The result suggests that the model performs best with small gamma and moderate cost.
+
+Overall, the CV_Error is in a larger range than linear from 0.074 to 0.57.
+
+When cost = 0.001 or 0.01, regardless of gamma, the model consistently performs poorly (CV error up to 0.57).
+
+This suggests the model is too constrained to find a meaningful boundary between classes.
+
+Some combinations show higher CV error likely due to overfitting:
+
+When gamma = 0.5 and cost is very large (1000), the CV error increases to 0.11
+
+Similarly, with gamma = 1.00 and high cost, CV error also increases
+
+This indicates that the model becomes too flexible and fits the training data too closely, losing some generalization.
+
+```{r 7 (c) Radial kernel}
+# Radial kernel
+tune.out.radial <- tune(svm, mpg01 ~ ., data = Auto_svm, kernel = "radial", 
+                        ranges = list(cost = cost_values, 
+                                      gamma = c(0.5, 1, 2, 3, 4)))
+print(summary(tune.out.radial))
+```
+
+### Applied: 7 (c) Radial and Polynomial Kernel SVMs
+
+For Polynomial Kernel SVM:
+
+From the output, the optimal parameters are: cost value is 5 and degree is 3, and the corresponding best performance (error) is 0.08192308
+
+The result suggests that a degree-3 polynomial kernel with a moderate cost achieves the best performance.
+
+Overall, the CV_Error is in a larger range than linear from 0.082 to 0.55.
+
+When cost = 0.001 or 0.01, CV error is high across all degrees, indicating the model is too constrained to learn the class boundaries well.
+
+With high degree and high cost, error increases again. For example:
+
+Degree = 3, Cost = 1000, CV Error = 0.092
+
+This indicates the model is too flexible and overfits the training data.
+
+```{r 7 (c) Polynomial kernel}
+# Polynomial kernel
+tune.out.poly <- tune(svm, mpg01 ~ ., data = Auto_svm, kernel = "polynomial", 
+                        ranges = list(cost = cost_values, 
+                                      degree = c(1, 2, 3, 4, 5)))
+print(summary(tune.out.poly))
+```
+
+### Applied: 7 (d) Plot
+
+```{r 7 (d) Linear}
+# Linear
+plot(tune.out.linear$best.model, Auto_svm, weight ~ horsepower)
+plot(tune.out.linear$best.model, Auto_svm, cylinders ~ year)
+plot(tune.out.linear$best.model, Auto_svm, cylinders ~ horsepower)
+```
+
+```{r 7 (d) Radial}
+# Radial
+plot(tune.out.radial$best.model, Auto_svm, weight ~ horsepower)
+plot(tune.out.radial$best.model, Auto_svm, cylinders ~ year)
+plot(tune.out.radial$best.model, Auto_svm, cylinders ~ horsepower)
+```
+
+```{r 7 (d) Polynomial}
+# Polynomial
+plot(tune.out.poly$best.model, Auto_svm, weight ~ horsepower)
+plot(tune.out.poly$best.model, Auto_svm, cylinders ~ year)
+plot(tune.out.poly$best.model, Auto_svm, cylinders ~ horsepower)
+```
