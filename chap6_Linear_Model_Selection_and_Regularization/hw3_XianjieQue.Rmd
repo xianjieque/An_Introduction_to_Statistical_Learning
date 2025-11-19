@@ -1,0 +1,839 @@
+---
+title: "Datamining_hw2_XianjieQue"
+output:
+  html_document: default
+  pdf_document: default
+date: "2025-02-05"
+---
+
+## 3
+
+### 3-(a): iv. Steadily decrease.
+
+As we increase s from 0, the training RSS will steadily decrease. When s = 0, the constraint forces all coefficients to be zero, the training RSS is maximized. As s increases, the constraint allows more and more coefficients to be nonzero, and the model is better able to fit the training data, so the RSS decreases.
+
+### 3-(b): ii. Decrease initially, and then eventually start increasing in a U shape.
+
+As we increase s from 0, the test RSS will decrease initially, and then eventually start increasing in a U shape. As s increases, the constraint allows more coefficients to be nonzero, and the model is more flexible and can fit the training data better. In this period, the test RSS will decrease. However, when s continues to increase, the model will overfit and the test RSS will then increase.
+
+### 3-(c): iii. Steadily increase.
+
+As we increase s from 0, the variance will steadily increase. S increases, the regularization becomes small, the model is more flexible and results in higher variance.
+
+### 3-(d): iv. Steadily decrease.
+
+As we increase s from 0, (squared) bias will steadily decrease. S increases, the regularization becomes small, the model is more flexible and the (squared) bias decreases.
+
+### 3-(e): v. Remain constant.
+
+As we increase s from 0, the irreducible error will remain constant. This is because irreducible error is the variability associated with ε, which, by definition, cannot be predicted using X. No matter how well we estimate f, we cannot reduce the error introduced by ε. So the irreducible error will remain constant.
+
+## 4
+
+### 4-(a): iii. Steadily increase.
+
+As we increase λ from 0, the regularization becomes bigger and s becomes smaller. More weight is placed on the sum of squared coefficients and so the model becomes less flexible. As a result, training RSS must increase.
+
+At the same time, geometrically, β1\^2 +β\^2 ≤ s represents a circle, while the first part of the formula corresponds to the ellipses, which are the contours of the RSS. The optimal solution is the point of tangency between the circle and the RSS contours. As s decreases, the circle shrinks, and the RSS at the tangency point increases.
+
+### 4-(b): ii. Decrease initially, and then eventually start increasing in a U shape.
+
+As we increase λ from 0, the regularization becomes bigger and the model becomes less flexible. Test RSS will decrease at first, because the variance decreases. But when λ continues to increase, the model becomes too sample and bias increases, Test RSS will increase eventually.
+
+### 4-(c): iv. Steadily decrease.
+
+As we increase λ from 0, the regularization becomes bigger and the model becomes less flexible. So the variance will steadily decrease.
+
+### 4-(d): iii. Steadily increase.
+
+As we increase λ from 0, the regularization becomes bigger and the model becomes less flexible. So the (squared) bias will steadily increase.
+
+### 4-(e): v. Remain constant.
+
+Irreducible error is the variability associated with ε, which, by definition, cannot be predicted using X. No matter how well we estimate f, we cannot reduce the error introduced by ε. So the irreducible error will remain constant.
+
+## 5
+
+### 5-(a):
+
+We are trying to minimize the ridge regression:
+
+$$
+\sum_{i=1}^n \left(y_i - \beta_0 - \sum_{j=1}^p\beta_jx_{ij}\right)^2 +
+  \lambda\sum_{j=1}^p\beta_j^2
+$$
+
+Since $\beta_0$ = 0, we can ignore $\beta_0$. Additionally, we can define $x_1 = x_{11} = x_{12}$ and $x_2 = x_{21} = x_{22}$, then we can continue to simplify:
+
+$$
+\ (y_1 - \beta_1x_1 - \beta_2x_1)^2 + 
+     (y_2 - \beta_1x_2 - \beta_2x_2)^2 + 
+     \lambda\beta_1^2 + \lambda\beta_2^2
+$$
+
+$$
+\ y_1^2 - 2y_1\beta_1x_1 - 2y_1\beta_2x_1 + \beta_1^2x_1^2 + 2\beta_1\beta_2x_1^2 + \beta_2^2x_1^2 + y_2^2 - 2y_2\beta_1x_2 - 2y_2\beta_2x_2 + \beta_1^2x_2^2 + 2\beta_1\beta_2x_2^2 + \beta_2^2x_2^2 + \lambda\beta_1^2 + \lambda\beta_2^2
+$$
+
+### 5-(b):
+
+To find the minimum of the above equation, take the derivatives of the above expression with respect to $\beta_1$ and $\beta_2$.
+
+$$
+\frac{\partial}{\partial{\beta_1}} = 
+  - 2y_1x_1 + 2\beta_1x_1^2 + 2\beta_2x_1^2
+  - 2y_2x_2 + 2\beta_1x_2^2 + 2\beta_2x_2^2
+  + 2\lambda\beta_1
+$$
+
+$$
+\frac{\partial}{\partial{\beta_2}} = 
+  - 2y_1x_1 + 2\beta_1x_1^2 + 2\beta_2x_1^2
+  - 2y_2x_2 + 2\beta_1x_2^2 + 2\beta_2x_2^2
+  + 2\lambda\beta_2
+$$
+
+Set these two partial differentiations to 0, then we get two equations with respect to $\lambda\beta_1$ and $\lambda\beta_2$.
+
+$$
+\lambda\beta_1 = y_1x_1 + y_2x_2 - \beta_1x_1^2 - \beta_2x_1^2 - \beta_1x_2^2 - \beta_2x_2^2 \\
+\lambda\beta_2 = y_1x_1 + y_2x_2 - \beta_1x_1^2 - \beta_2x_1^2 - \beta_1x_2^2 - \beta_2x_2^2 
+$$
+
+Therefore,
+
+$$
+\lambda\beta_1 = \lambda\beta_2 \\
+\beta_1 = \beta_2
+$$
+
+### 5-(c):
+
+We are trying to minimize the lasso regression:
+
+$$
+\sum_{i=1}^n \left(y_i - \beta_0 - \sum_{j=1}^p\beta_jx_{ij}\right)^2 +
+  \lambda\sum_{j=1}^p |\beta_j|
+$$
+
+As above, we define $x_1 = x_{11} = x_{12}$ and $x_2 = x_{21} = x_{22}$, then continue to simplify:
+
+$$
+(y_1 - \beta_1x_1 - \beta_2x_1)^2 + 
+  (y_2 - \beta_1x_2 - \beta_2x_2)^2 + 
+  \lambda|\beta_1| + \lambda|\beta_2|
+$$
+
+### 5-(d):
+
+I used the alternate form of the lasso:
+
+$$
+(y_1 - \hat{\beta_1}x_1 - \hat{\beta_2}x_1)^2 + (y_2 - \hat{\beta_1}x_2 - \hat{\beta_2}x_2)^2 \quad \text{subject to} \quad |\hat{\beta_1}| + |\hat{\beta_2}| \le s
+$$
+
+Since $x_1 + x_2 = 0$ and $y_1 + y_2 = 0$, this is equivalent to minimizing $2(y_1 - (\hat{\beta_1} + \hat{\beta_2})x_1)^2$ .
+
+It has a simple solution: $\hat{\beta_1} + \hat{\beta_2} = y_1/x_1$.
+
+Geometrically, this is a $45^\circ$ backwards sloping line in the ($\hat{\beta_1}$, $\hat{\beta_2}$) plane.
+
+The constraints $|\hat{\beta_1}| + |\hat{\beta_2}| \le s$ specify a diamond shape in the same place, also with lines that are at $45^\circ$ centered at the origin and which intersect the axes at a distance $s$ from the origin.
+
+Thus, points along two edges of the diamond ($\hat{\beta_1} + \hat{\beta_2} = s$ and $\hat{\beta_1} + \hat{\beta_2} = -s$) become solutions to the lasso optimization problem. That's why he lasso optimization problem has a whole set of solutions instead of a unique one. 
+
+## 6
+
+### 6-(a):
+
+Equation 6.12 is:
+
+$$
+\sum_{j=1}^p(y_j - \beta_j)^2 + \lambda\sum_{j=1}^p\beta_j^2
+$$
+
+Equation 6.14 is:
+
+$$
+\hat{\beta}_j^R = y_j/(1 + \lambda)
+$$
+
+where $\hat{\beta}_j^R$ is the ridge regression estimate.
+
+```{r}
+lambda <- 5
+y <- 4
+fn <- function(beta) {
+  (y - beta)^2 + lambda * beta^2
+}
+plot(seq(-9, 9, 0.2), fn(seq(-9, 9, 0.2)), type = "l", 
+     xlab = "beta", ylab = "Ridge optimization")
+beta.est <- y / (1 + lambda)
+points(beta.est, (y - beta.est)^2 + lambda * beta.est^2, 
+       col = "red", pch = 4, lwd = 5)
+```
+
+From the plot, the function is minimized at β=y/(1+λ).
+
+### 6-(b):
+
+Equation 6.13 is:
+
+$$
+\sum_{j=1}^p(y_j - \beta_j)^2 + \lambda\sum_{j=1}^p|\beta_j|
+$$
+
+Equation 6.15 is:
+
+$$
+\hat{\beta}_j^L = \begin{cases}
+  y_j - \lambda/2 &\mbox{if } y_j > \lambda/2; \\
+  y_j + \lambda/2 &\mbox{if } y_j < -\lambda/2; \\
+  0               &\mbox{if } |y_j| \le \lambda/2;
+\end{cases}
+$$
+
+For $\lambda = 5$ and $y = 4$, the top case applies.
+
+```{r}
+lambda <- 5
+y <- 4
+fn <- function(beta) {
+  (y - beta)^2 + lambda * abs(beta)
+}
+plot(seq(-9, 9, 0.2), fn(seq(-9, 9, 0.2)), type = "l", 
+     xlab = "beta", ylab = "Lasso optimization")
+beta.est_l <- y / (1 + lambda)
+points(beta.est_l, (y - beta.est_l)^2 + lambda * beta.est_l^2, 
+       col = "red", pch = 4, lwd = 5)
+```
+
+ From the plot, the function is minimized at β=y−λ/2 when y>λ/2.
+
+## 8
+
+### (a) Generate the Data
+
+```{r 8a}
+# library all packages for 8,10,11
+
+library(leaps)
+library(glmnet)
+library(ncvreg)
+library(SIS)
+library(MASS)
+library(ISLR)
+
+set.seed(11)  
+n <- 100
+X <- rnorm(n)  
+ep <- rnorm(n, mean = 0, sd = 1)  
+```
+
+### (b) Generate Response Variable
+
+```{r 8b}
+# Define coefficients
+beta0 <- 2
+beta1 <- 7
+beta2 <- -5
+beta3 <- 6
+
+Y <- beta0 + beta1*X + beta2*X^2 + beta3*X^3 + ep
+```
+
+### (c) Best Subset Selection
+
+We find that, with Cp we pick the 5-variables model, with BIC we pick the 4-variables model, and with adjusted R2 we pick the 5-variables model.
+
+```{r 8c}
+data_8c <- data.frame(X, Y)
+
+best_subset_8c <- regsubsets(Y ~ X + I(X^2) + I(X^3) + I(X^4) + I(X^5) + I(X^6) + I(X^7) + I(X^8) + I(X^9) + I(X^10),
+                             data = data_8c, 
+                             nvmax = 10)
+
+best_summary_8c <- summary(best_subset_8c)
+best_summary_8c
+
+# Find best models based on Cp, BIC, and Adjusted R²
+best_cp_8c <- which.min(best_summary_8c$cp)
+best_cp_8c
+
+best_bic_8c <- which.min(best_summary_8c$bic)
+best_bic_8c
+
+best_adj_r2_8c <- which.max(best_summary_8c$adjr2)
+best_adj_r2_8c
+
+# Plot selection criteria
+# I used "type = "o"" to link every point to a line
+
+par( mfrow=c(2,2) )
+
+plot( best_summary_8c$cp,
+      xlab="Number of variables", ylab="Cp", pch=19, type = "o" )
+points(best_cp_8c, best_summary_8c$cp[best_cp_8c], 
+       col = "red", pch = 19)
+
+plot( best_summary_8c$bic, 
+      xlab="Number of variables", ylab="BIC", pch=19, type = "o" )
+points(best_bic_8c, best_summary_8c$bic[best_bic_8c], 
+       col = "red", pch = 19)
+
+plot( best_summary_8c$adjr2, 
+      xlab="Number of variables", ylab="adjusted R2", pch=19, type = "o" )
+points(best_adj_r2_8c, best_summary_8c$adjr2[best_adj_r2_8c], 
+       col = "red", pch = 19)
+
+plot( best_summary_8c$rss, 
+      xlab="Number of variables", ylab="RSS",pch=19, type = "o" )
+best_rss_8c <- which.min(best_summary_8c$rss)
+points(best_rss_8c, best_summary_8c$rss[best_rss_8c], 
+       col = "red", pch = 19)
+
+par( mfrow=c(1,1) )
+
+# Extract the coefficients of the best model
+coef(best_subset_8c, best_cp_8c)
+coef(best_subset_8c, best_bic_8c)
+coef(best_subset_8c, best_adj_r2_8c)
+
+cat("Best Cp is: ", best_cp_8c, 
+    "according to best Cp, the coefficients are:", coef(best_subset_8c, best_cp_8c), "\n")
+
+cat("Best BIC is: ", best_bic_8c, 
+    "according to best BIC, the coefficients are:", coef(best_subset_8c, best_bic_8c), "\n")
+
+cat("Best adjusted R2 is: ", best_adj_r2_8c, 
+    "according to best adjusted R2, the coefficients are:", 
+    coef(best_subset_8c, best_adj_r2_8c), "\n")
+```
+
+### (d) Forward & Backward Stepwise Selection
+
+Compared the results of three methods, best subset selection, forward selection and backward selection, I found the model size selected are slightly different. Even in the same model size selected by different methods, the selected variables and their coefficients are different. But there are several high-frequently selected variables like X, (X\^2), (X\^3), (X\^8), (X\^10), indicating those variables are very likely important.
+
+Best subset selection: with Cp we pick the 5-variables model, with BIC we pick the 4-variables model, and with adjusted R2 we pick the 5-variables model.
+
+Forward selection: with Cp we pick the 4-variables model, with BIC we pick the 4-variables model, and with adjusted R2 we pick the 7-variables model.
+
+Backward selection: with Cp we pick the 4-variables model, with BIC we pick the 4-variables model, and with adjusted R2 we pick the 8-variables model.
+
+With BIC, three selection methods all pick the 4-variables model.
+
+With Cp, best subset selection picks the 5-variables model while forward and backward selection pick the 4-variables model - a slight difference.
+
+With adjusted R2, the differences between the three selection methods are even greater. Best subset selection picks the 5-variables model, forward selection picks the 7-variables model and backward selection picks the 8-variables model.
+
+```{r 8d}
+# Forward selection
+forward_8d <- regsubsets(Y ~ X + I(X^2) + I(X^3) + I(X^4) + I(X^5) + I(X^6) + I(X^7) + I(X^8) + I(X^9) + I(X^10),
+                         data = data_8c, 
+                         method = "forward", nvmax = 10)
+summary(forward_8d)
+
+# Backward selection
+backward_8d <- regsubsets(Y ~ X + I(X^2) + I(X^3) + I(X^4) + I(X^5) + I(X^6) + I(X^7) + I(X^8) + I(X^9) + I(X^10),
+                          data = data_8c, 
+                          method = "backward", nvmax = 10)
+summary(backward_8d)
+
+# To compare the results of three selection methods, I did (c) again, got the best model for each selection obtained according to Cp, BIC, and adjusted R2 and the coefficients of the best model obtained. 
+
+# Forward selection results
+
+best_cp_forward <- which.min(summary(forward_8d)$cp)
+best_cp_forward
+coef(forward_8d, best_cp_forward)
+
+best_bic_forward <- which.min(summary(forward_8d)$bic)
+best_bic_forward
+coef(forward_8d, best_bic_forward)
+
+best_adj_r2_forward <- which.max(summary(forward_8d)$adjr2)
+best_adj_r2_forward
+coef(forward_8d, best_adj_r2_forward)
+
+par( mfrow=c(2,2) )
+
+plot( summary(forward_8d)$cp,
+      xlab="Number of variables", ylab="Cp", pch=19, type = "o" )
+points(best_cp_forward, summary(forward_8d)$cp[best_cp_forward], 
+       col = "red", pch = 19)
+
+plot( summary(forward_8d)$bic, 
+      xlab="Number of variables", ylab="BIC", pch=19, type = "o" )
+points(best_bic_forward, summary(forward_8d)$bic[best_bic_forward], 
+       col = "red", pch = 19)
+
+plot( summary(forward_8d)$adjr2, 
+      xlab="Number of variables", ylab="adjusted R2", pch=19, type = "o" )
+points(best_adj_r2_forward, summary(forward_8d)$adjr2[best_adj_r2_forward], 
+       col = "red", pch = 19)
+
+par( mfrow=c(1,1) )
+
+# Backward selection results
+
+best_cp_backward <- which.min(summary(backward_8d)$cp)
+best_cp_backward
+coef(backward_8d, best_cp_backward)
+
+best_bic_backward <- which.min(summary(backward_8d)$bic)
+best_bic_backward
+coef(backward_8d, best_bic_backward)
+
+best_adj_r2_backward <- which.max(summary(backward_8d)$adjr2)
+best_adj_r2_backward
+coef(backward_8d, best_adj_r2_backward)
+
+par( mfrow=c(2,2) )
+
+plot( summary(backward_8d)$cp,
+      xlab="Number of variables", ylab="Cp", pch=19, type = "o" )
+points(best_cp_backward, summary(backward_8d)$cp[best_cp_backward], 
+       col = "red", pch = 19)
+
+plot( summary(backward_8d)$bic, 
+      xlab="Number of variables", ylab="BIC", pch=19, type = "o" )
+points(best_bic_backward, summary(backward_8d)$bic[best_bic_backward], 
+       col = "red", pch = 19)
+
+plot( summary(backward_8d)$adjr2, 
+      xlab="Number of variables", ylab="adjusted R2", pch=19, type = "o" )
+points(best_adj_r2_backward, summary(backward_8d)$adjr2[best_adj_r2_backward], 
+       col = "red", pch = 19)
+
+par( mfrow=c(1,1) )
+```
+
+### (e) Lasso Regression with Cross-Validation
+
+The best lambda is 0.1177742
+
+After refitting lasso model with the best lambda, The lasso method picks X, X\^2 and X\^3 as variables for the model.
+
+```{r 8e}
+grid =10 ^ seq (10, -2, length = 100)
+
+X_mat <- model.matrix(Y ~ X + I(X^2) + I(X^3) + I(X^4) + I(X^5) + I(X^6) + I(X^7) + I(X^8) + I(X^9) + I(X^10), data = data_8c)[,-1]
+Y_vec <- data_8c$Y
+
+cv_8e <- cv.glmnet(X_mat, Y_vec, alpha = 1)
+plot(cv_8e)
+
+best_lamb_8e <- cv_8e$lambda.min
+best_lamb_8e
+
+lasso_coef <- coef(cv_8e, s = best_lamb_8e)
+print(lasso_coef)
+
+# refit lasso model using the best lambda
+
+out_8e <- glmnet(X_mat, Y_vec, alpha = 1)
+lasso.coef_8e <- predict(out_8e, type = "coefficients", s = best_lamb_8e)[1:11,]
+
+lasso.coef_8e
+
+lasso.coef_8e[lasso.coef_8e !=0]
+```
+
+### (f) New Model
+
+First, I did the best subset selection. With Cp we pick the 4-variables model, with BIC and adjusted R2 we pick the 1-variables model. BIC and adjusted R2 picks the most accurate 1-variable model with the same coefficients. The estimated beta0 = 2.119193 (compared to true value: 2) The estimated beta7 = 3.001060 (compared to true value: 3)
+
+Second, I did the lasso. The lasso also picks the most accurate 1-variable model, but the intercept is quite off. The estimated beta0 = 2.389977 (compared to true value: 2) The estimated beta7 = 2.913578 (compared to true value: 3)
+
+```{r 8f}
+# Define coefficients
+beta0 <- 2
+beta7 <- 3
+
+# Generate new response variable
+Y_8f <- beta0 + beta7 * X^7 + ep
+
+# Create new dataset
+data_8f <- data.frame(X, Y_8f)
+
+# Perform best subset selection again
+best_subset_8f <- regsubsets(Y_8f ~ X + I(X^2) + I(X^3) + I(X^4) + I(X^5) + I(X^6) + I(X^7) + I(X^8) + I(X^9) + I(X^10),
+                             data = data_8f)
+summary(best_subset_8f)
+
+coef(best_subset_8f, which.min(summary(best_subset_8f)$cp))
+coef(best_subset_8f, which.min(summary(best_subset_8f)$bic))
+coef(best_subset_8f, which.min(summary(best_subset_8f)$adjr2))
+
+par( mfrow=c(2,2) )
+
+plot( summary(best_subset_8f)$cp,
+      xlab="Number of variables", ylab="Cp", pch=19, type = "o" )
+points(which.min(summary(best_subset_8f)$cp),
+       summary(best_subset_8f)$cp[which.min(summary(best_subset_8f)$cp)], 
+       col = "red", pch = 19)
+
+plot( summary(best_subset_8f)$bic, 
+      xlab="Number of variables", ylab="BIC", pch=19, type = "o" )
+points(which.min(summary(best_subset_8f)$bic),
+       summary(best_subset_8f)$bic[which.min(summary(best_subset_8f)$bic)], 
+       col = "red", pch = 19)
+
+plot( summary(best_subset_8f)$adjr2, 
+      xlab="Number of variables", ylab="adjusted R2", pch=19, type = "o" )
+points(which.min(summary(best_subset_8f)$adjr2), 
+       summary(best_subset_8f)$adjr2[which.min(summary(best_subset_8f)$adjr2)],
+       col = "red", pch = 19)
+
+par( mfrow=c(1,1) )
+
+# Perform Lasso regression again
+X_mat_2 <- model.matrix(Y ~ X + I(X^2) + I(X^3) + I(X^4) + I(X^5) + I(X^6) + I(X^7) + I(X^8) + I(X^9) + I(X^10), data = data_8f)[,-1]
+
+cv_8f <- cv.glmnet(X_mat_2, data_8f$Y, alpha = 1)
+plot(cv_8f)
+
+out_8f <- glmnet(X_mat_2, data_8f$Y, alpha = 1)
+lasso.coef_8f <- predict(out_8f, type = "coefficients", 
+                         s = cv_8f$lambda.min)[1:11,]
+
+lasso.coef_8f
+
+lasso.coef_8f[lasso.coef_8f !=0]
+```
+
+## 10
+
+### (a) Generate the dataset
+
+```{r 10a}
+set.seed(11)  
+
+n <- 1000
+p <- 20
+
+X_10a <- matrix(rnorm(n * p), n, p)
+
+# Define true beta where some are exactly 0.
+beta_true <- rep(0, 20)
+beta_true[1:5] <- c(2, -5, 100, 7, 9)
+
+ep_10a <- rnorm(n, mean = 0, sd = 1) 
+
+Y_10a <- X_10a %*% beta_true + ep_10a
+
+data_10a <- data.frame(X_10a, Y_10a)
+```
+
+### (b) training data (100) and test data (900)
+
+```{r 10b}
+set.seed(11)
+idx <- sample(n, 100)
+train_data_10b <- data_10a[idx, ]
+test_data_10b <- data_10a[-idx, ]
+```
+
+### (c) Perform Best Subset Selection and Plot Training MSE
+
+```{r 10c}
+best_subset_10c <- regsubsets(Y_10a ~ .,data = train_data_10b, nvmax = p)
+
+summary(best_subset_10c)
+plot(summary(best_subset_10c)$rss / nrow(train_data_10b), 
+     type = "o", col = "blue", pch = 16, 
+     xlab = "Model Size", 
+     ylab = "Training MSE",
+     main = "Training MSE vs Model Size")
+```
+
+### (d) Plot Test MSE
+
+```{r 10d}
+test_mse_10d <- rep(NA, p)
+
+test.mat <- model.matrix(Y_10a ~ ., data = test_data_10b) 
+
+for (i in 1:p) {
+  coefi <- coef(best_subset_10c, id = i)
+  pred_test <- test.mat[, names(coefi)] %*% coefi
+  test_mse_10d[i] <- mean((test_data_10b$Y_10a - pred_test) ^ 2)
+}
+
+plot(1:p, test_mse_10d, type = "o", col = "red", pch = 16, 
+     xlab = "Model Size", 
+     ylab = "Test MSE",
+     main = "Test MSE vs Model Size")
+```
+
+### (e) Determine Optimal Model Size
+
+The test MSE is minimized at model size 5, an intermediate number of features.
+
+This corresponds to the simulated data which has 5 non-zero coefficients.
+
+```{r 10e}
+best_model_size_10e <- which.min(test_mse_10d)
+cat("The test MSE is minimized at model size:", best_model_size_10e, "\n")
+
+## If I change other 4 coefficients from 0 to very small value, the test MSE is still minimized at model size 5. ___ as below ##
+
+set.seed(11)
+dat <- matrix(rnorm(1000 * 20), nrow = 1000)
+colnames(dat) <- paste0("b", 1:20)
+beta <- rep(0, 20)
+beta[1:9] <- c(2, -5, 3, 7, 9, 0.001, 0.05, -0.1, 0.1052)
+y <- colSums((t(dat) * beta)) + rnorm(1000)
+dat <- data.frame(dat)
+dat$y <- y
+train <- dat[1:100, ]
+test <- dat[101:1000, ]
+
+predict.regsubsets <-function (object ,newdata ,id ,...){
+  form=as.formula (object$call [[2]])
+ mat=model.matrix (form, newdata)
+  coefi =coef(object ,id=id)
+  xvars =names (coefi )
+  mat[,xvars ]%*% coefi
+  }
+
+fit <- regsubsets(y ~ ., data = train, nvmax = 20)
+summary(fit)
+mse <- sapply(1:20, function(i) mean((test$y - predict.regsubsets(fit, test, i))^2))
+plot(mse, ylab = "MSE", type = "o", pch = 19)
+which.min(mse)
+```
+
+### (f) Compare Selected Model to True Model
+
+Compared the true model to the model at which the test set MSE is minimized, their coeﬀicient values are extremely close. It indicates that the coefficient values are well estimated.
+
+```{r 10f}
+# Get selected model coefficients
+best_model_coef_10f <- coef(best_subset_10c, id = best_model_size_10e)
+
+# Compare with true beta
+beta_estimates_10f <- rep(0, p)
+names(beta_estimates_10f) <- colnames(X_10a)
+
+# Fill in the estimated values
+beta_estimates_10f[names(best_model_coef_10f)[-1]] <- best_model_coef_10f[-1]
+
+# Comparison
+beta_true
+beta_estimates_10f
+```
+
+### (g) Plot Beta Error
+
+From the Beta error plot, the error of the coefficient estimates is minimized when model size is 5. This corresponds to the point when test MSE was minimized.
+
+As more features are added, the Beta error initially decreases but increases after the point model size = 5. This resembles the test MSE plot, confirming that models with excessive parameters poorly estimate coefficients.
+
+```{r 10g}
+beta_error_10g <- rep(NA, p)
+
+beta_true
+
+colnames(X_10a) <- paste0("X", seq(1, 20))
+
+for (r in 1:p) {
+  coef_r <- coef(best_subset_10c, id = r)
+  beta_est_r <- rep(0, p)
+  names(beta_est_r) <- colnames(X_10a)
+  beta_est_r[names(coef_r)[-1]] <- coef_r[-1]
+  
+  beta_error_10g[r] <- sqrt(sum((beta_true - beta_est_r) ^ 2))
+}
+
+# Plot Beta Error
+plot(1:p, beta_error_10g, type = "b", 
+     col = "red", pch = 16, 
+     xlab = "Model Size",
+     ylab = "Sum of Squared Beta Errors", 
+     main = "Beta Error vs Model Size")
+```
+
+## 11
+
+Breast cancer gene expression data from The Cancer Genome Atlas (brca1.rds Download brca1.rds). This is a dataset with ultra-high dimensional covariates, i.e., . Split the data set into a training set and a test set. Standardize the continuous variables before carrying out variable selection, to make sure all the coefficients are on the same scale.
+
+### Pre-processing
+
+```{r Pre-processing}
+data_11 <- readRDS("brca1.rds")
+X <- data_11$X
+Y <- data_11$y
+
+# exclude missing values
+X <- na.omit(X)
+Y <- na.omit(Y)
+
+# Standardize the continuous variables
+X_scaled <- scale(X)
+
+set.seed(11)
+train=sample (c(TRUE, FALSE), nrow(X_scaled), rep=TRUE)
+sum(train==TRUE)     ##Get the number of training observations
+test=(!train )
+sum(test==TRUE)    ##Get the number of testing observations
+
+X_train <- X_scaled[train, ]
+Y_train <- Y[train]
+X_test <- X_scaled[test, ]
+Y_test <- Y[test]
+```
+
+### (a)
+
+(a) Fit a lasso model on the training set, with chosen by cross validation. Report the test error obtained, along with the number of non-zero coefficient estimates.
+
+```{r 11a}
+lasso_mod_11a <- glmnet(X_train, Y_train, alpha = 1, lambda = grid)
+
+cv_out_11a <- cv.glmnet(X_train, Y_train, alpha = 1)
+plot(cv_out_11a)
+best_lam_11a <- cv_out_11a$lambda.min
+
+lasso_pred_11a <- predict(lasso_mod_11a, s = best_lam_11a, newx = X_test)
+test_error_lasso_11a <- mean((lasso_pred_11a - Y_test)^2)
+
+out_11a <- glmnet(X_scaled, Y, alpha=1)
+lasso_coef_11a <- predict(out_11a, type="coefficients",
+                          s=best_lam_11a)[-1, ]
+
+lasso_coef_11a[lasso_coef_11a !=0]
+
+nonzero_lasso <- length(lasso_coef_11a[lasso_coef_11a !=0]) 
+
+cat("Lasso Test Error:", test_error_lasso_11a, 
+    "Lasso Non-zero Coefficients:", nonzero_lasso, "\n")
+```
+
+### (b)
+
+(b) Fit an elastic net model on the training set, with chosen by cross validation. Report the test error obtained, along with the number of non-zero coefficient estimates.
+
+```{r 11b}
+# I used "alpha = 0.5"
+
+Enet_mod_11b <- glmnet(X_train, Y_train, alpha = 0.5, lambda = grid)
+
+cv_out_11b <- cv.glmnet(X_train, Y_train, alpha = 0.5)
+plot(cv_out_11b)
+best_lam_11b <- cv_out_11b$lambda.min
+
+Enet_pred_11b <- predict(Enet_mod_11b, s = best_lam_11b, newx = X_test)
+test_error_Enet_11b <- mean((Enet_pred_11b - Y_test)^2)
+
+out_11b <- glmnet(X_scaled, Y, alpha=1)
+Enet_coef_11b <- predict(out_11b, type="coefficients",
+                          s=best_lam_11b)[-1, ]
+
+Enet_coef_11b[Enet_coef_11b !=0]
+
+nonzero_Enet <- length(Enet_coef_11b[Enet_coef_11b !=0]) 
+
+cat("Lasso Test Error:", test_error_Enet_11b, 
+    "Lasso Non-zero Coefficients:", nonzero_Enet, "\n")
+```
+
+### (c)
+
+(c) Fit an adaptive lasso model on the training set. Report the test error obtained, along with the number of non-zero coefficient estimates.
+
+```{r 11c}
+# fit an initial Lasso model to obtain coefficient estimates
+lasso_model_11c <- cv.glmnet(X_train, Y_train, alpha = 1)
+lasso_coef_11c <- coef(lasso_model_11c, s =lasso_model_11c$lambda.min)[-1] 
+
+weights <- 1 / (abs(lasso_coef_11c) + 1e-6)  # avoid 0
+
+alasso_model_11c <- cv.glmnet(X_train, Y_train, alpha = 1, penalty.factor = weights)
+
+alasso_pred_11c <- predict(alasso_model_11c, 
+                           s = alasso_model_11c$lambda.min, newx = X_test)
+test_error_alasso <- mean((alasso_pred_11c - Y_test)^2)
+
+alasso_coef_11c <- coef(alasso_model_11c, s = alasso_model_11c$lambda.min)[-1, ]
+alasso_coef_11c[alasso_coef_11c!=0]
+
+nonzero_alasso <- length(alasso_coef_11c[alasso_coef_11c!=0]) 
+
+cat("Adaptive LASSO Test Error:", test_error_alasso, 
+    "Non-zero Coefficients:", nonzero_alasso, "\n")
+```
+
+### (d)
+
+(d) Fit a SCAD model on the training set. Report the test error obtained, along with the number of non-zero coefficient estimates.
+
+```{r 11d}
+cv_out_11d <- cv.ncvreg(X_train, Y_train, family="gaussian", penalty="SCAD")
+plot(cv_out_11d)
+best_lam_11d <- cv_out_11d$lambda.min
+
+SCAD_mod_11d <- ncvreg(X_train, Y_train, family = "gaussian", penalty = "SCAD")
+SCAD_pred_11d <- predict(SCAD_mod_11d, lambda=best_lam_11d, X = X_test)
+test_error_SCAD_11d <- mean((SCAD_pred_11d - Y_test)^2)
+
+out_11d <- ncvreg(X_scaled, Y, family="gaussian", penalty="SCAD")
+SCAD.coef <- predict(out_11d, type="coefficients",
+                     lambda=best_lam_11d)[-1,]
+
+SCAD.coef[SCAD.coef!=0]
+
+nonzero_SCAD <- length(SCAD.coef[SCAD.coef!=0])  
+
+cat("SCAD Test Error:", test_error_SCAD_11d, 
+    "SCAD Non-zero Coefficients:", nonzero_SCAD, "\n")
+```
+
+### (e)
+
+(e) Fit an MCP model on the training set. Report the test error obtained, along with the number of non-zero coefficient estimates.
+
+```{r 11e}
+cv_out_11e <- cv.ncvreg(X_train, Y_train, penalty = "MCP")
+plot(cv_out_11e)
+best_lam_11e <- cv_out_11e$lambda.min
+
+MCP_mod_11e <- ncvreg(X_train, Y_train, family = "gaussian", penalty = "MCP")
+MCP_pred_11e <- predict(MCP_mod_11e, lambda=best_lam_11e, X = X_test)
+test_error_MCP_11e <- mean((MCP_pred_11e - Y_test)^2)
+
+out_11e <- ncvreg(X_scaled, Y, penalty = "MCP")
+MCP.coef <- predict(out_11e, type = "coefficients",
+                     lambda = best_lam_11e)[-1, ]
+
+MCP.coef[MCP.coef!=0]
+
+nonzero_MCP <- length(MCP.coef[MCP.coef!=0]) 
+
+cat("MCP Test Error:", test_error_MCP_11e, 
+    "MCP Non-zero Coefficients:", nonzero_MCP, "\n")
+```
+
+### (f)
+
+(f) Fit an ISIS model on the training set. Report the test error obtained, along with the number of non-zero coefficient estimates.
+
+```{r 11f}
+model_ISIS <- SIS(X_train, Y_train, family = 'gaussian', penalty = 'MCP', 
+                  tune = 'cv', nfolds = 10, seed = 31)
+best_lam_11f <- model_ISIS$lambda
+ISIS.pred <- predict(model_ISIS, newx = X_test, 
+                     lambda = best_lam_11f, type = "response")
+test_error_ISIS_11f <- mean((ISIS.pred - Y_test)^2)
+
+out_11f <- SIS(X_scaled, Y, family='gaussian', penalty = 'MCP')
+
+ISIS.coef<-predict(out_11f, type = "coefficients", lambda = best_lam_11f)[-1, ]
+
+ISIS.coef[ISIS.coef!= 0]
+
+nonzero_ISIS <- length(ISIS.coef[ISIS.coef!= 0]) 
+
+cat("ISIS Test Error:", test_error_ISIS_11f, 
+    "ISIS Non-zero Coefficients:", nonzero_ISIS, "\n")
+```

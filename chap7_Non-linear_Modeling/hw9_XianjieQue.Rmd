@@ -1,0 +1,591 @@
+---
+title: "hw9"
+author: "XianjieQue"
+date: "2025-04-17"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+### load packages
+
+```{r load packages}
+library(ggplot2)
+library(ISLR2)
+library(boot)
+library(splines)
+library(leaps)
+library(glmnet)
+# install.packages("gam")
+library(gam)
+```
+
+Section 7.9
+
+### Conceptual: 1
+
+What I need to do is to show that a function of the form\
+$$
+f(x) = \beta_0 + \beta_1 x + \beta_2 x^2 + \beta_3 x^3 + \beta_4 (x - \xi)^3_+
+$$\
+is a cubic regression spline with one knot at $\xi$.
+
+#### (a)
+
+Define $f_1(x)$ for $x \leq \xi$
+
+When $x \leq \xi$, the truncated cubic term disappears:\
+$$
+(x - \xi)^3_+ = 0
+$$\
+So the function becomes: $$
+f_1(x) = \beta_0 + \beta_1 x + \beta_2 x^2 + \beta_3 x^3
+$$\
+Thus, we can write it as a cubic polynomial:\
+$$
+f_1(x) = a_1 + b_1 x + c_1 x^2 + d_1 x^3
+$$\
+where:\
+$$a_1 = \beta_0 \\ b_1 = \beta_1 \\ c_1 = \beta_2 \\ d_1 = \beta_3$$
+
+#### (b)
+
+Define $f_2(x)$ for $x > \xi$
+
+For $x > \xi$, we expand the truncated cubic term: $$
+(x - \xi)^3 = x^3 - 3\xi x^2 + 3\xi^2 x - \xi^3
+$$
+
+So: $$
+f(x) = \beta_0 + \beta_1 x + \beta_2 x^2 + \beta_3 x^3 + \beta_4(x - \xi)^3\\
+= (\beta_0 - \beta_4 \xi^3) + (\beta_1 + 3 \beta_4 \xi^2)x + (\beta_2 - 3 \beta_4 \xi) x^2 + (\beta_3 + \beta_4) x^3
+$$
+
+This gives us another cubic polynomial: 
+$$
+f_2(x) = a_2 + b_2 x + c_2 x^2 + d_2 x^3
+$$
+
+where:
+$$
+a_2 = \beta_0 - \beta_4 \xi^3 \\ b_2 = \beta_1 + 3 \beta_4 \xi^2 \\
+c_2 = \beta_2 - 3 \beta_4 \xi \\ d_2 = \beta_3 + \beta_4
+$$
+
+#### (c)
+
+Show that $f_1(\xi) = f_2(\xi)$, which means continuity at $\xi$
+
+Compute: 
+$$
+f_1(\xi) = \beta_0 + \beta_1 \xi + \beta_2 \xi^2 + \beta_3 \xi^3
+$$
+
+and: $$
+f_2(\xi) = a_2 + b_2 \xi + c_2 \xi^2 + d_2 \xi^3\\
+= (\beta_0 - \beta_4 \xi^3) + (\beta_1 + 3 \beta_4 \xi^2) \xi + (\beta_2 - 3 \beta_4 \xi) \xi^2 + (\beta_3 + \beta_4) \xi^3
+$$ After simplification, $f_2(\xi) = f_1(\xi)$\
+So the function is continuous at $\xi$
+
+#### (d)
+
+Show that $f_1'(\xi) = f_2'(\xi)$, which means first derivative
+continuity
+
+Derivative of a cubic: $$
+f'(x) = \beta_1 + 2\beta_2 x + 3\beta_3 x^2 + 3\beta_4(x - \xi)^2_+
+$$
+
+At $x = \xi$, the last term is zero, so: $$
+f_1'(\xi) = f_2'(\xi) = \beta_1 + 2\beta_2 \xi + 3\beta_3 \xi^2
+$$ First derivative is continuous at $\xi$.
+
+#### (e)
+
+Show that $f_1''(\xi) = f_2''(\xi)$, which means second derivative
+continuity
+
+Second derivative of a cubic: $$
+f''(x) = 2\beta_2 + 6\beta_3 x + 6\beta_4(x - \xi)^1_+
+$$
+
+At $x = \xi$, the last term is again zero: $$
+f_1''(\xi) = f_2''(\xi) = 2\beta_2 + 6\beta_3 \xi
+$$
+
+Second derivative is continuous at $\xi$.
+
+All conditions are satisfied for a cubic spline:
+
+1.  Piecewise cubic on either side of $\xi$
+2.  Function, first derivative, and second derivative are all continuous
+    at $\xi$
+
+$$
+{f(x) \text{ is a cubic regression spline with one knot at } \xi}
+$$
+
+### Conceptual: 2
+
+#### (a) λ=∞,m=0
+
+We penalize the function $g(x)$ itself. An infinite $\lambda$ means that
+this penalty dominates. This forces $\hat{g}$ to be 0 everywhere.
+
+To avoid an infinite penalty, the only solution is $\hat{g}(x) = 0$
+
+#### (b) λ=∞,m=1
+
+We penalize the square of the first derivative $g'(x)$. With
+$\lambda = \infty$, the curve must be completely flat to avoid infinite
+penalty.
+
+We need $g'(x) = 0$ everywhere. This means $\hat{g}(x)$ must be a
+constant function.
+
+Thus, $\hat{g}$ is a constant function: $\hat{g}(x) = c$
+
+#### (c) λ=∞,m=2
+
+We penalize the second derivative $g''(x)$. So the curve must be linear
+in order to have zero penalty. Therefore, $\hat{g}$ is a linear
+function: $\hat{g}(x) = a x + b$
+
+#### (d) λ=∞,m=3
+
+We penalize the third derivative $g^{(3)}(x)$. To avoid any penalty, the curve will have a consistent rate of change (a quadratic
+function or similar). So, $\hat{g}(x)$ can be the form:
+$\hat{g}(x) = a x^2 + b x + c$
+
+#### (e) λ=0,m=3
+
+There is no penalty on the third derivative or any smoothness. The
+optimization only minimizes the squared errors at the data points.
+
+$\hat{g}$ interpolates all data points exactly, and may be highly
+non-smooth. It can be thought of as a high-degree polynomial or a
+piecewise spline that satisfies:
+$\hat{g}(x_i) = y_i \quad \text{for all } i = 1, \dots, n$
+
+### Applied: 6
+
+#### (a)
+
+CV (cross-validation) selects degree 5, while when testing with ANOVA,
+degrees 2 and 3 are highly significant, degree 4 is marginal.
+
+Because CV chooses the degree that gives the lowest average prediction
+error on unseen data, while ANOVA tests whether adding higher-degree
+terms significantly improves model fit over simpler ones.
+
+```{r 6 (a)}
+data(Wage)
+sum(is.na(Wage))
+
+# CV
+set.seed(9)
+
+cv_error_poly <- sapply(1:5, function(i) {
+  fit <- glm(wage ~ poly(age, i), data = Wage)
+  cv.glm(Wage, fit, K = 10)$delta[1]
+})
+best_degree <- which.min(cv_error_poly)
+print(paste("Best degree:", best_degree))
+
+plot(1:5, cv_error_poly, pch = 19, type = "b", xlab = "degree of polynomial", ylab = "CV estimate of the prediction error")
+grid()
+
+# ANOVA comparison
+lm.fit1 <- lm(wage ~ poly(age, 1), data = Wage)
+lm.fit2 <- lm(wage ~ poly(age, 2), data = Wage)
+lm.fit3 <- lm(wage ~ poly(age, 3), data = Wage)
+lm.fit4 <- lm(wage ~ poly(age, 4), data = Wage)
+lm.fit5 <- lm(wage ~ poly(age, 5), data = Wage)
+anova(lm.fit1, lm.fit2, lm.fit3, lm.fit4, lm.fit5)
+
+# Plot best polynomial fit (degree = 3)
+agelims <- range(Wage$age)
+age.grid <- seq(from = agelims[1], to = agelims[2])
+preds <- predict(lm.fit3, newdata = data.frame(age = age.grid), se = TRUE)
+se.bands <- cbind(preds$fit + 2 * preds$se.fit, preds$fit - 2 * preds$se.fit)
+
+plot(Wage$age, Wage$wage, xlim = agelims, cex = 0.5, xlab = "Age", ylab = "Wage")
+title("Degree-3 Polynomial Fit")
+lines(age.grid, preds$fit, lwd = 2, col = "blue")
+matlines(age.grid, se.bands, lwd = 1, col = "blue", lty = 3)
+```
+
+#### (b) Step function with CV
+
+The best number of cuts choosed by CV is 8
+
+```{r 6 (b)}
+set.seed(9)
+
+cv_error_step <- rep(NA, 9)
+for (i in 2:10) {
+  Wage$age.cut <- cut(Wage$age, breaks = i)
+  fit <- glm(wage ~ age.cut, data = Wage)
+  cv_error_step[i - 1] <- cv.glm(Wage, fit, K = 10)$delta[1]
+}
+best_cut <- which.min(cv_error_step) + 1
+print(paste("Best number of cuts:", best_cut))
+
+# Fit step function with best number of cuts
+breaks <- quantile(Wage$age, probs = seq(0, 1, length.out = best_cut + 1))
+Wage$age.cut <- cut(Wage$age, breaks = breaks, include.lowest = TRUE)
+step.fit <- glm(wage ~ age.cut, data = Wage)
+
+# Plot step function fit
+age.grid <- seq(from = min(Wage$age), to = max(Wage$age), length.out = 100)
+
+# Apply same cuts to new data
+newdata <- data.frame(age = age.grid)
+newdata$age.cut <- cut(newdata$age, breaks = breaks, include.lowest = TRUE)
+
+# Predict using step function
+step.pred <- predict(step.fit, newdata = newdata)
+
+# Plot
+plot(wage ~ age, data = Wage, xlab = "Age", ylab = "Wage")
+title("Step Function Fit")
+lines(age.grid, step.pred, col = "red", lwd = 2)
+```
+
+### Applied: 9
+
+#### (a)
+
+All terms of the cubic polynomial are significant (p-values are less
+than 0.001). This shows that the relationship between dis and nox is not
+a simple linear relationship, but has a nonlinear trend.
+
+The nonlinear relationship in the plot shows as: when "dis" increases,
+"nox" first decreases rapidly, then stabilizes, and then decreases
+slightly.
+
+Multiple R-squared: 0.7148, Adjusted R-squared: 0.7131
+
+The goodness of fit is high, indicating that the polynomial model
+adequately explains the data, explaining approximately 71.5% of the
+variance.
+
+```{r 9 (a)}
+data(Boston)
+
+fit_a <- lm(nox ~ poly(dis, 3), data = Boston)
+summary(fit_a)
+
+plot(nox ~ dis, data = Boston, 
+     xlab = "dis", ylab = "nox", 
+     main = "third degree polynomial fit")
+
+dis_range <- range(Boston$dis)
+dis_samples <- seq(from = dis_range[1], to = dis_range[2], length.out = 100)
+y_hat <- predict(fit_a, newdata = list(dis = dis_samples))
+
+lines(dis_samples, y_hat, col = "red")
+grid()
+```
+
+#### (b)
+
+From the output, as the degree increased, the RSS decreased steadily,
+indicating improved fit on the training data. However, the marginal
+reduction in RSS became negligible after degree 3, suggesting that
+increasing complexity beyond that point may lead to overfitting.
+
+```{r 9 (b)}
+d_max <- 10
+
+# Training RSS for degrees 1 to 10
+training_rss <- rep(NA, d_max)
+for (d in 1:d_max) {
+    m <- lm(nox ~ poly(dis, d), data = Boston)
+    training_rss[d] <- sum((m$residuals)^2)
+}
+
+plot(1:d_max, training_rss, type = "b", pch = 19, xlab = "Degree", ylab = "Training RSS")
+title("Training RSS vs Polynomial Degree")
+
+# Output the RSS for each degree
+rss_df <- data.frame(Degree = 1:10, Training_RSS = training_rss)
+print(rss_df)
+```
+
+#### (c)
+
+The plot shows that the CV error initially decreases slightly and
+reaches its minimum around degree 3. After that, the error begins to
+increase, especially at degrees 7, 9, and 10, indicating potential
+overfitting.
+
+The optimal degree selected by CV would likely be degree 3. This result aligns with the RSS plot in (b), which showed decreasing returns in training error beyond degree 3.
+
+```{r 9 (c)}
+set.seed(9)
+
+d_max <- 10
+cv_error <- rep(NA, d_max)
+
+for (d in 1:d_max) {
+  glm.fit <- glm(nox ~ poly(dis, d), data = Boston)
+  cv_error[d] <- cv.glm(Boston, glm.fit, K = 10)$delta[1]
+}
+
+plot(1:d_max, cv_error, type = "b", pch = 19,
+     xlab = "Degree", ylab = "CV Error",
+     main = "CV Error for Polynomial Degree")
+
+which.min(cv_error)
+```
+
+#### (d)
+
+Output:
+
+Using 4 df, all terms are significant.
+
+Multiple R-squared: 0.7164, Adjusted R-squared: 0.7142
+
+The goodness of fit is high, indicating that the polynomial model
+adequately explains the data, explaining approximately 71.6% of the
+variance.
+
+How to choose the knots?
+
+Knots are chosen based on quantiles of the data.
+
+df = #knots + degree and the default degree is 3 (cubic)
+
+So, bs(dis, df = 4) automatically selects 1 knot over the range of "dis".
+
+I use "attr(bs(Boston\$dis, df = 4), "knots")" to check the knot, the
+output "3.20745" means the knot is at "dis = 3.20745"
+
+```{r 9 (d)}
+fit_d <- lm(nox ~ bs(dis, df = 4), data = Boston)
+summary(fit_d)
+
+attr(bs(Boston$dis, df = 4), "knots")
+
+plot(Boston$dis, Boston$nox, xlab = "dis", ylab = "nox", 
+     main = "bs with df=4 fit")
+
+dis_range <- range(Boston$dis)
+dis_samples <- seq(from = dis_range[1], to = dis_range[2], length.out = 100)
+y_hat <- predict(fit_d, newdata = data.frame(dis = dis_samples))
+
+lines(dis_samples, y_hat, col = "red")
+grid()
+```
+
+#### (e)
+
+From the result, as the df increased from 3 to 20, RSS decreased from
+1.93 to 1.78.
+
+The reduction in RSS was most significant when increasing from 3 to 10
+df.
+
+Beyond df = 10, the gain was minimal, suggesting that higher flexibility
+may lead to overfitting without substantial improvement.
+
+Therefore, 10 degrees of freedom may offer a good trade-off between bias
+and variance in this case.
+
+The same in the plot: The curve with low df (such as df = 3) is too
+smooth and cannot capture the nonlinear structure between dis-nox. The
+curve with high df (such as df = 15, 20) fits more finely, but may not
+perform well on the test set.
+
+```{r 9 (e)}
+dof_choices <- c(3, 4, 5, 10, 15, 20)
+rss_values <- numeric(length(dof_choices))
+
+plot(Boston$dis, Boston$nox, xlab = "dis", ylab = "nox", 
+     main = "Regression Spline Fits")
+
+colors <- rainbow(length(dof_choices))
+legend_labels <- c()
+
+for (i in seq_along(dof_choices)) {
+  df_val <- dof_choices[i]
+  fit <- lm(nox ~ bs(dis, df = df_val), data = Boston)
+  
+  rss_values[i] <- sum(residuals(fit)^2)
+  
+  dis.grid <- seq(min(Boston$dis), max(Boston$dis), length.out = 100)
+  preds <- predict(fit, newdata = data.frame(dis = dis.grid))
+  lines(dis.grid, preds, col = colors[i], lwd = 2)
+  
+  legend_labels[i] <- paste("df =", df_val)
+}
+
+legend("topright", legend = legend_labels, col = colors, lwd = 2)
+print(data.frame(dof = dof_choices, RSS = round(rss_values, 2)))
+```
+
+#### (f)
+
+I performed cross-validation and the best degrees of freedom based on CV
+is 10.
+
+This result is consistent with the RSS trend in (e), where the RSS
+plateaued after df = 10. Therefore, df = 10 appears to be an appropriate
+complexity level for modeling the relationship between "dis" and "nox".
+
+```{r 9 (f)}
+set.seed(9)
+
+dof_choices <- c(3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+cv_errors <- numeric(length(dof_choices))
+
+for (i in seq_along(dof_choices)) {
+  df_val <- dof_choices[i]
+  glm.fit <- glm(nox ~ bs(dis, df = df_val), data = Boston)
+  cv_result <- cv.glm(Boston, glm.fit, K = 10)
+  cv_errors[i] <- cv_result$delta[1]
+}
+
+plot(dof_choices, cv_errors, type = "b", pch = 19,
+     xlab = "Degrees of Freedom", ylab = "10-fold CV Error",
+     main = "CV Error vs Spline Degrees of Freedom")
+
+best_df <- dof_choices[which.min(cv_errors)]
+points(best_df, min(cv_errors), col = "red", pch = 19, cex = 1.5)
+text(best_df, min(cv_errors), labels = paste("Best df:", best_df), pos = 3, col = "red")
+
+print(paste("Best degrees of freedom based on CV:", best_df))
+```
+
+### Applied: 10
+
+#### (a)
+
+There are 17 Variables (and intercept) in all.
+
+The model selection criterion I used was BIC.
+
+Best model size choosen by BIC is 10, with coefficients given by: 
+
+"PrivateYes" "Apps" "Accept" "Top10perc" "F.Undergrad" "Room.Board"
+"Terminal" "perc.alumni" "Expend" "Grad.Rate"
+
+```{r 10 (a)}
+data("College")
+sum(is.na(College))
+
+# split 70% as training, 30% as test
+set.seed(9)
+train <- sample(1:nrow(College), 0.7*nrow(College))
+
+College_train <- College[train,]
+College_test <- College[-train,]
+
+x <- College[, !names(College) %in% "Outstate"]
+y <- College$Outstate
+x_train <- as.matrix(College_train[, !names(College_train) %in% "Outstate"])
+y_train <- as.numeric(College_train$Outstate)
+x_test <- as.matrix(College_test[, !names(College_test) %in% "Outstate"])
+y_test <- as.numeric(College_test$Outstate)
+
+fit_forward <- regsubsets(Outstate ~ ., data = College_train, 
+                             nvmax = ncol(College_train) - 1, method = "forward")
+fit_summary <- summary(fit_forward)
+fit_summary
+
+# Identify best model by BIC
+best_model_size <- which.min(fit_summary$bic)
+best_model_vars <- names(coef(fit_forward, best_model_size))[-1]  # remove intercept
+print(paste("Best model size (by BIC):", best_model_size))
+print("Selected predictors:")
+print(best_model_vars)
+
+
+```
+
+#### (b)
+
+Each plot shows the estimated smooth function (s(variable)) of a
+predictor on the "Outstate", with 95% CIs (dashed lines).
+
+"PrivateYes" is a categorical variable. There is a large vertical jump
+between No and Yes, suggesting that private colleges tend to have
+significantly higher out-of-state tuition than public ones.
+
+Variables like "Expend" and "Grad.Rate" display smooth, non-linear
+influences.
+
+The GAM captures both linear and non-linear relationships, showing its
+flexibly model complex effects without assuming strict linearity.
+
+```{r 10 (b)}
+numeric_vars <- names(College)[sapply(College, is.numeric)]
+
+best_model_vars[best_model_vars == "PrivateYes"] <- "Private"
+
+formula_terms <- sapply(best_model_vars, function(var) {
+  if (var %in% numeric_vars) {
+    paste0("s(", var, ")")
+  } else {
+    var
+  }
+})
+
+gam_formula <- as.formula(paste("Outstate ~", paste(formula_terms, collapse = " + ")))
+
+# Fit GAM
+fit_gam <- gam(gam_formula, data = College_train)
+
+# Plot the GAM fit
+par(mfrow = c(1, 2))
+plot(fit_gam, se = TRUE, col = "blue")
+```
+
+#### (c)
+
+Test MSE of the GAM: 3906866.28
+
+This means the average squared error between the predicted and actual
+Outstate tuition on the test set is about 3.91 million. Since the
+tuition values are mostly between 5,000 and 20,000, this MSE suggests
+moderate prediction error — but not excellent.
+
+```{r 10 (c)}
+pred_gam <- predict(fit_gam, newdata = College_test)
+
+# Compute test MSE
+mse_gam <- mean((College_test$Outstate - pred_gam)^2)
+print(paste("Test MSE of the GAM:", round(mse_gam, 2)))
+```
+
+#### (d)
+
+GAM tests for non-linearity using the ANOVA for Nonparametric Effects.
+Variables with "Pr(F) \> 0.05" suggest non-linear relationships.
+
+From the output:
+
+The variable "Private" does not appear in the "Nonparametric Effects"
+section because it is a binary categorical variable.
+
+There is strong evidence of non-linear relationships between "Outstate"
+and "Expend" (very strong), "Accept", "Grad.Rate", "F.Undergrad"
+
+There is marginal evidence for "Room.Board"
+
+Other variables, including "Apps", "Top10perc", "perc.alumni", and
+"Terminal", do not show significant non-linear effects — a linear fit is
+sufficient.
+
+While the smoothing plot for "Terminal" shows apparent curvature, the
+corresponding nonparametric p-value (p = 0.206) suggests that this
+nonlinearity is not statistically significant. This indicates that the
+observed curve might be due to random variation or overfitting, rather
+than reflecting a true nonlinear relationship in the population.
+
+```{r 10 (d)}
+summary(fit_gam)
+```
