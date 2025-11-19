@@ -1,0 +1,277 @@
+---
+title: "DataMining_hw1_XianjieQue"
+output: html_document
+date: "2025-01-28"
+---
+### 1
+
+### 1-(a): a flexible method is better.
+
+When the sample size is large and the number of predictors is small, a flexible method can capture complex relationships in the data without overfitting.
+
+### 1-(b): a inflexible method is better.
+
+Flexible methods require a very large number of observations, which are not fit when the number of observations is small. They are prone to overfitting or randomly associating some predictors.
+
+### 1-(c): a flexible method is better.
+
+Because in this case, a inflexible method will lead to higher bias and may not be adequate. Flexible methods, such as decision trees or neural networks, can capture complex, non-linear relationships between predictors and the response.
+
+### 1-(d): a inflexible method is better.
+
+When the variance of the error terms is high, the data is noisy, and a flexible method may fit the noise in the data, leading to overfitting. Inflexible methods are more robust to noise.
+
+
+### 2
+
+### 2-(a): regression, inference, n = 500, p = 3
+
+The CEO salary is a quantitative variable so it is a regression problem. The interest is to understand which factor affect CEO salary so we are more interested in inference.
+
+### 2-(b): classification, prediction, n = 20, p = 13
+
+We wish to know whether it will be a success or a failure. It is a qualitative response so can be referred as a classification problem. Since we want to know the result, the interest is prediction.
+
+### 2-(c): regression, prediction, n = 52, p = 3
+
+We want to predict the % change in the USD/Euro exchange. Obviously, we are more interested in prediction. Since the % change is a quantitative response, it is a regression problem.
+
+
+### 5 
+
+### Advantages of a flexible approach: 
+
+1) less bias; 
+2) can generate a much wider range to estimate f
+
+### Disadvantages of a flexible approach: 
+
+1) harder to interpret;
+2) need a very large number of observations
+3) more variance and may lead to overfit
+
+When inference is the goal / there are a very large number of observations /we have non-linear patterns, a more flexible approach will be preferred.
+
+When inference is the goal / there are few observations, a less flexible approach will be preferred.
+
+### 6 The difference, advantages and disadvantages between parametric and non-parametric methods.
+
+### Difference:
+Parametric methods is based on model and parameters in the model. It simplifies the problem of estimating f down to estimating a set of parameters. Non-parametric methods don't assume explicit model or parameters, instead they seek an estimate of f that gets as close to the data points as possible without being too rough or wiggly.
+
+### Advantage of Parametric methods (as opposed to non-parametric approaches):
+
+1) Parametric methods don't need a very large number of observations.
+2) It is more interpretable because the response dats is generated from model.
+
+### Disadvantage of Parametric methods (as opposed to non-parametric approaches):
+
+1) If the functional form used to estimate f is very different from the true f, the resulting model will not fit the data well.
+2) It is less flexible.
+
+### 8-(a)
+```{r 8-(a)}
+college <- read.csv("/Users/quexianjie/Desktop/1/SP2025.660 Biomedical Data Mining/hw1/College.csv", header = T, na.strings = "?", stringsAsFactors = T)
+head(college)
+dim(college)
+```
+### 8-(b)
+```{r 8-(b)}
+rownames(college) <- college[, 1]
+View(college)
+
+college <- college[, -1] 
+View(college)
+```
+### 8-(c)-i
+```{r 8-(c)-i}
+summary(college)
+```
+
+### 8-(c)-ii
+
+```{r 8-(c)-ii}
+# a scatterplot matrix of the first ten columns
+pairs(college[,1:10])
+```
+
+### 8-(c)-iii
+
+```{r 8-(c)-iii}
+attach(college)
+plot(Private, Outstate,
+     xlab = 'Private Indicator',
+     ylab = 'Out-of-state tuition',
+     main = 'Boxplots of Outstate versus Private'
+     )
+```
+
+### 8-(c)-iv
+
+```{r 8-(c)-iv}
+Elite <- rep("No", nrow(college))
+Elite[college$Top10perc > 50] <- "Yes" 
+Elite <- as.factor(Elite)
+college <- data.frame(college, Elite)
+
+summary(Elite)  # There are 78 elite universities
+
+plot(college$Elite, college$Outstate,
+     xlab = 'Elite Universities',
+     ylab = 'Out-of-state tuition',
+     main = 'Boxplots of Outstate versus Elite'
+     )
+```
+
+### 8-(c)-v
+
+```{r 8-(c)-v}
+par(mfrow = c(2, 2))
+
+hist(college$Outstate, 
+     main = "Histogram_Outstate_10 bins", 
+     xlab = "Outstate Tuition", 
+     col = "skyblue", 
+     breaks = 10)
+
+hist(college$Room.Board, 
+     main = "Histogram_Room and Board_20 bins", 
+     xlab = "Room and Board Cost", 
+     col = "lightgreen", 
+     breaks = 20)
+
+hist(college$Books, 
+     main = "Histogram_Books_15 bins", 
+     xlab = "Books Cost", 
+     col = "lightpink", 
+     breaks = 15)
+
+hist(college$Personal, 
+     main = "Histogram_Personal Expenses_25 bins", 
+     xlab = "Personal Expenses", 
+     col = "lightcoral", 
+     breaks = 25)
+
+par(mfrow = c(1, 1))
+```
+### 8-(c)-vi
+
+A brief summary: 
+
+From the correlation between variables, we know that "Number of full-time undergraduates" has a strong positive correlation with Enrolled number, Accepted number and Applications number, but has almost nothing to do with "Instructional expenditure per student". 
+
+At the same time, chi-square analysis is performed on the remaining two qualitative variables. Since the P-value is less than 0.05, whether a college is Private and Elite is not random.
+
+```{r 8-(c)-vi}
+pairs(college)
+cor(college[, sapply(college, is.numeric)])
+chisq.test(college$Private, college$Elite)
+```
+
+### 9-(a)
+
+Answer: From the result of "summary(Auto)", there are 9 predictors. "Name" is qualitative and the other 8 are quantitative. They are: "mpg", "cylinders", "displacement", "horsepower", "weight", "acceleration", "year", "origin".
+
+```{r 9-(a)}
+# load the Auto data set and remove missing values
+Auto <- read.table("/Users/quexianjie/Desktop/1/SP2025.660 Biomedical Data Mining/hw1/Auto.data", 
+                   header = T, na.strings = "?", stringsAsFactors = T)
+dim(Auto)
+Auto <- na.omit(Auto) 
+dim(Auto)
+
+summary(Auto)
+```
+
+### 9-(b)
+
+```{r 9-(b)}
+# create a vector "quanti_x" including all 8 quantitative predictors
+x <- colnames(Auto)
+quanti_x <- setdiff(x, "name")
+
+# use a for loop to calculate the range for each predictor
+ranges <- list()
+for (i in quanti_x){
+  ranges[[i]] <- range(Auto[[i]])
+}
+print(ranges)
+```
+
+### 9-(c)
+
+```{r 9-(c)}
+# use a for loop to calculate the mean for each predictor
+means <- list()
+for (i in quanti_x){
+  means[[i]] <- mean(Auto[[i]])
+}
+print(means)
+
+# use a for loop to calculate the standard deviation for each predictor
+sds <- list()
+for (i in quanti_x){
+  sds[[i]] <- sd(Auto[[i]])
+}
+print(sds)
+```
+
+### 9-(d)
+
+```{r 9-(d)}
+# remove the 10th through 85th observations
+Auto_2 <- Auto[-c(10:85),]
+dim(Auto_2)
+
+# use the for loop to calculate the range again
+ranges_2 <- list()
+for (i in quanti_x){
+  ranges_2[[i]] <- range(Auto_2[[i]])
+}
+print(ranges_2)
+
+# use the for loop to calculate the mean again
+means_2 <- list()
+for (i in quanti_x){
+  means_2[[i]] <- mean(Auto_2[[i]])
+}
+print(means_2)
+
+# use the for loop to calculate the standard deviation again
+sds_2 <- list()
+for (i in quanti_x){
+  sds_2[[i]] <- sd(Auto_2[[i]])
+}
+print(sds_2)
+```
+
+### 9-(e)
+
+Comments: 
+From the scatterplot matrix created by pairs() function, among these variables, "mpg" is strongly influenced by "displacement", "horsepower", and "weight", all showing a negative correlation with fuel efficiency.
+Besides, "displacement" and "horsepower" have a strong positive correlation.
+
+```{r 9-(e)}
+attach(Auto)
+cylinders <- as.factor(cylinders)
+plot(cylinders, mpg, col = "red", varwidth = T,
+    xlab = "cylinders", ylab = "MPG")
+
+pairs(
+ ~mpg + cylinders + displacement + horsepower + weight + acceleration
+ + year + origin + name, data = Auto)
+```
+
+### 9-(f)
+
+Answer: 
+Yes. From the scatterplot matrix created by pairs() function, among these variables, "mpg" is strongly influenced by "displacement", "horsepower", and "weight", all showing a negative correlation with fuel efficiency. The relationship between "mpg" and other variables are more complex and possibly non-linear.
+So we can use "displacement", "horsepower", and "weight" to predict "mpg". The greater "displacement", "horsepower", and "weight" are, the less "mpg" is.
+
+```{r 9-(f)}
+pairs(
+ ~mpg + cylinders + displacement + horsepower + weight + acceleration
+ + year + origin + name, data = Auto)
+
+cor(Auto[, sapply(Auto, is.numeric)])
+```
